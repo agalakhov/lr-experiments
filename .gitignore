@@ -1,0 +1,5 @@
+main.exe
+*.o
+yy.c
+bnf.c
+bnf.h
