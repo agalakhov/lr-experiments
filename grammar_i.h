@@ -37,7 +37,6 @@ struct terminal {
 };
 
 struct nonterminal {
-    bool            nullable;
     struct rule *   rules; /* linked list */
 };
 
@@ -48,6 +47,7 @@ struct symbol {
 
     struct symbol *     next;
 
+    bool                nullable;
     bitset_t            first;      /* FIRST(1) set of terminals */
     bitset_t            follow;     /* FOLLOW(1) set of terminals */
 
