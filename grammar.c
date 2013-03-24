@@ -277,6 +277,37 @@ find_first(grammar_t grammar)
     } while (chg);
 }
 
+static void
+find_follow(grammar_t grammar)
+{
+    for (struct symbol * sym = grammar->symlist.first ; sym; sym = sym->next) {
+        if (sym->follow)
+            set_free(sym->follow);
+        sym->follow = set_alloc(grammar->n_terminals + 1);
+        if (! sym->follow)
+            abort();
+    }
+    bool chg;
+    do {
+        chg = false;
+        for (struct symbol * lsym = grammar->symlist.first ; lsym; lsym = lsym->next) {
+            if (lsym->type != NONTERMINAL)
+                continue;
+            for (struct rule *r = lsym->s.nt.rules; r; r = r->next) {
+                for (unsigned i = r->length - 1; i > 0; --i) {
+                    struct symbol * rs1 = r->rs[i-1].sym;
+                    const struct symbol * rsi = r->rs[i].sym;
+                    chg = set_union(rs1->follow, rsi->first) || chg;
+                    if ((rsi->type == NONTERMINAL) && rsi->s.nt.nullable)
+                        chg = set_union(rs1->follow, rsi->follow) || chg;
+                }
+                if (r->length)
+                    chg = set_union(r->rs[r->length - 1].sym->follow, lsym->follow) || chg;
+            }
+        }
+    } while (chg);
+}
+
 /*
  * Finish building grammar
  */
@@ -296,6 +327,7 @@ grammar_complete(grammar_t grammar)
 
     find_nullable(grammar);
     find_first(grammar);
+    find_follow(grammar);
 
     build_lr0(grammar);
 
