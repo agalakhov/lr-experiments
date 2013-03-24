@@ -113,8 +113,6 @@ grammar_nonterminal(grammar_t grammar,
         (*s)->s.nt.nullable = false;
         commit_symbol(grammar, *s);
     }
-    if (rsn == 0)
-        (*s)->s.nt.nullable = true;
 
     struct rule *rule = calloc(1, sizeof_struct_rule(rsn));
     if (! rule)
@@ -209,6 +207,75 @@ dump_grammar(grammar_t grammar)
     }
 }
 
+static void
+find_nullable(grammar_t grammar)
+{
+    bool chg;
+    do {
+        chg = false;
+        for (struct symbol * sym = grammar->symlist.first ; sym; sym = sym->next) {
+            switch (sym->type) {
+                case TERMINAL:
+                    break;
+                case NONTERMINAL:
+                    if (! sym->s.nt.nullable) {
+                        for (struct rule *r = sym->s.nt.rules; r; r = r->next) {
+                            bool rule_nullable = true;
+                            for (unsigned i = 0; i < r->length; ++i) {
+                                const struct symbol * rs = r->rs[i].sym;
+                                if ((rs->type == NONTERMINAL) && rs->s.nt.nullable)
+                                    continue;
+                                rule_nullable = false;
+                            }
+                            if (rule_nullable) {
+                                sym->s.nt.nullable = true;
+                                chg = true;
+                            }
+                        }
+                    }
+                    break;
+            }
+        }
+    } while (chg);
+}
+
+static void
+find_first(grammar_t grammar)
+{
+    for (struct symbol * sym = grammar->symlist.first ; sym; sym = sym->next) {
+        if (sym->first)
+            set_free(sym->first);
+        sym->first = set_alloc(grammar->n_terminals + 1);
+        if (! sym->first)
+            abort();
+    }
+    bool chg;
+    do {
+        chg = false;
+        for (struct symbol * sym = grammar->symlist.first ; sym; sym = sym->next) {
+            switch (sym->type) {
+                case TERMINAL:
+                    /* Terminal's FIRST is the terminal itself */
+                    set_add(sym->first, sym->id);
+                    break;
+                case NONTERMINAL:
+                    {
+                        for (struct rule *r = sym->s.nt.rules; r; r = r->next) {
+                            for (unsigned i = 0; i < r->length; ++i) {
+                                const struct symbol * rs = r->rs[i].sym;
+                                chg = set_union(sym->first, rs->first) || chg;
+                                if (rs->type == TERMINAL)
+                                    break;
+                                if ((rs->type == NONTERMINAL) && ! rs->s.nt.nullable)
+                                    break;
+                            }
+                        }
+                    }
+                    break;
+            }
+        }
+    } while (chg);
+}
 
 /*
  * Finish building grammar
@@ -226,6 +293,10 @@ grammar_complete(grammar_t grammar)
     printf("Terminals: %u\nNonterminals: %u\nRules: %u\n",
            grammar->n_terminals, grammar->n_nonterminals, grammar->n_rules);
     printf("===\n");
+
+    find_nullable(grammar);
+    find_first(grammar);
+
     build_lr0(grammar);
 
 }
