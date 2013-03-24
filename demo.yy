@@ -1,0 +1,11 @@
+program ::= expr.
+expr ::= expr PLUS term.
+expr ::= expr MINUS term.
+expr ::= PLUS term.
+expr ::= MINUS term.
+expr ::= term.
+term ::= term MUL fac.
+term ::= term DIV fac.
+term ::= fac.
+fac ::= NUMBER.
+fac ::= LPAREN expr RPAREN.
