@@ -50,9 +50,12 @@ rcrealloc(void *ptr, size_t size)
     if (! ptr)
         return rcalloc(size);
     struct refc *s = TO_REFC(ptr);
-    s = realloc(s, offsetof(struct refc, data) + size);
-    if (! s)
+    void *s1 = realloc(s, offsetof(struct refc, data) + size);
+    if (! s1) {
+        free(s);
         return NULL;
+    }
+    s = (struct refc *) s1;
     return &s->data;
 }
 
