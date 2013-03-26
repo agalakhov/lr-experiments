@@ -1,11 +1,13 @@
 #include "grammar.h"
 
+#include "find.h"
 #include "lr0.h"
 #include "grammar_i.h"
 #include "strhash.h"
 #include "bitset.h"
 
-#include <stdio.h>
+#include "print.h"
+
 #include <stdlib.h>
 
 /*
@@ -176,133 +178,40 @@ count_symbols(grammar_t grammar)
         }
         if (! sym->use_count) {
             if (! grammar->start.sym && sym->type == NONTERMINAL) {
-                fprintf(stderr, "note: using `%s' as start symbol\n", sym->name);
+                print("note: using `%s' as start symbol\n", sym->name);
                 grammar->start.sym = sym;
             } else {
-                fprintf(stderr, "warning: unused %s symbol `%s'\n", strtype(sym), sym->name);
+                print("warning: unused %s symbol `%s'\n", strtype(sym), sym->name);
             }
         }
     }
 }
-
 
 static void
 dump_grammar(grammar_t grammar)
 {
+    print("-- Grammar:\n");
     for (struct symbol * sym = grammar->symlist.first; sym; sym = sym->next) {
         switch (sym->type) {
             case TERMINAL:
-                printf("%%terminal %s. // %i\n", sym->name, sym->id);
+                print("%%terminal %s.\n", sym->name);
                 break;
             case NONTERMINAL:
                 for (struct rule *r = sym->s.nt.rules; r; r = r->next) {
-                    printf("%s ::=", sym->name);
+                    print("%s ::=", sym->name);
                     for (unsigned i = 0; i < r->length; ++i)
-                        printf(" %s", r->rs[i].sym->name);
-                    printf(". // %i\n", sym->id);
+                        print(" %s", r->rs[i].sym->name);
+                    print(".\n");
                 }
                 break;
         }
     }
+    print("--\n");
 }
 
 static void
-find_nullable(grammar_t grammar)
+dump_stats(grammar_t grammar)
 {
-    bool chg;
-    do {
-        chg = false;
-        for (struct symbol * sym = grammar->symlist.first ; sym; sym = sym->next) {
-            switch (sym->type) {
-                case TERMINAL:
-                    break;
-                case NONTERMINAL:
-                    if (! sym->nullable) {
-                        for (struct rule *r = sym->s.nt.rules; r; r = r->next) {
-                            bool rule_nullable = true;
-                            for (unsigned i = 0; i < r->length; ++i) {
-                                const struct symbol * rs = r->rs[i].sym;
-                                if (rs->nullable)
-                                    continue;
-                                rule_nullable = false;
-                            }
-                            if (rule_nullable) {
-                                sym->nullable = true;
-                                chg = true;
-                            }
-                        }
-                    }
-                    break;
-            }
-        }
-    } while (chg);
-}
-
-static void
-find_first(grammar_t grammar)
-{
-    for (struct symbol * sym = grammar->symlist.first ; sym; sym = sym->next) {
-        if (sym->first)
-            set_free(sym->first);
-        sym->first = set_alloc(grammar->n_terminals + 1);
-        if (! sym->first)
-            abort();
-    }
-    bool chg;
-    do {
-        chg = false;
-        for (struct symbol * sym = grammar->symlist.first ; sym; sym = sym->next) {
-            switch (sym->type) {
-                case TERMINAL:
-                    /* Terminal's FIRST is the terminal itself */
-                    set_add(sym->first, sym->id);
-                    break;
-                case NONTERMINAL:
-                    {
-                        for (struct rule *r = sym->s.nt.rules; r; r = r->next) {
-                            for (unsigned i = 0; i < r->length; ++i) {
-                                const struct symbol * rs = r->rs[i].sym;
-                                chg = set_union(sym->first, rs->first) || chg;
-                                if (! rs->nullable)
-                                    break;
-                            }
-                        }
-                    }
-                    break;
-            }
-        }
-    } while (chg);
-}
-
-static void
-find_follow(grammar_t grammar)
-{
-    for (struct symbol * sym = grammar->symlist.first ; sym; sym = sym->next) {
-        if (sym->follow)
-            set_free(sym->follow);
-        sym->follow = set_alloc(grammar->n_terminals + 1);
-        if (! sym->follow)
-            abort();
-    }
-    bool chg;
-    do {
-        chg = false;
-        for (struct symbol * lsym = grammar->symlist.first ; lsym; lsym = lsym->next) {
-            if (lsym->type != NONTERMINAL)
-                continue;
-            for (struct rule *r = lsym->s.nt.rules; r; r = r->next) {
-                for (unsigned i = r->length - 1; i > 0; --i) {
-                    struct symbol * rs1 = r->rs[i-1].sym;
-                    const struct symbol * rsi = r->rs[i].sym;
-                    chg = set_union(rs1->follow, rsi->first) || chg;
-                    if (rsi->nullable)
-                        chg = set_union(rs1->follow, rsi->follow) || chg;
-                }
-                if (r->length)
-                    chg = set_union(r->rs[r->length - 1].sym->follow, lsym->follow) || chg;
-            }
-        }
-    } while (chg);
 }
 
 /*
@@ -315,12 +224,11 @@ grammar_complete(grammar_t grammar)
     count_symbols(grammar);
     /* At this point we have complete symbol graph */
 
-    dump_grammar(grammar);
+    if (print_opt(P_GRAMMAR))
+        dump_grammar(grammar);
 
-    printf("===\n");
-    printf("Terminals: %u\nNonterminals: %u\nRules: %u\n",
-           grammar->n_terminals, grammar->n_nonterminals, grammar->n_rules);
-    printf("===\n");
+    //printf("Terminals: %u\nNonterminals: %u\nRules: %u\n",
+    //       grammar->n_terminals, grammar->n_nonterminals, grammar->n_rules);
 
     find_nullable(grammar);
     find_first(grammar);
