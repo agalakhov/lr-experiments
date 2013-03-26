@@ -210,8 +210,16 @@ dump_grammar(grammar_t grammar)
 }
 
 static void
-dump_stats(grammar_t grammar)
+dump_symbols(grammar_t grammar)
 {
+    print("-- Terminals:\n");
+    for (struct symbol * sym = grammar->symlist.first; sym; sym = sym->next) {
+        if (sym->id == grammar->n_terminals + 1) {
+            print("-- Nonterminals:\n");
+        }
+        print("  %s = %u\n", sym->name, sym->id);
+    }
+    print("--\n");
 }
 
 /*
@@ -226,15 +234,19 @@ grammar_complete(grammar_t grammar)
 
     if (print_opt(P_GRAMMAR))
         dump_grammar(grammar);
-
-    //printf("Terminals: %u\nNonterminals: %u\nRules: %u\n",
-    //       grammar->n_terminals, grammar->n_nonterminals, grammar->n_rules);
+    if (print_opt(P_SYMBOLS))
+        dump_symbols(grammar);
 
     find_nullable(grammar);
     find_first(grammar);
     find_follow(grammar);
 
-    build_lr0(grammar);
+    if (print_opt(P_FIRST))
+        dump_first(grammar);
+    if (print_opt(P_FOLLOW))
+        dump_follow(grammar);
+
+//    build_lr0(grammar);
 
 }
 

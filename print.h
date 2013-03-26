@@ -4,6 +4,7 @@
 
 enum print {
     P_GRAMMAR,
+    P_SYMBOLS,
     P_FIRST,
     P_FOLLOW,
     P_LR0_KERNELS,

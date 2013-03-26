@@ -7,6 +7,38 @@
 
 #include <stdlib.h>
 
+static void
+dump_bitset(grammar_t grammar, const bitset_t set)
+{
+    for (struct symbol * sym = grammar->symlist.first ; sym; sym = sym->next) {
+        if (set_has(set, sym->id))
+            print(" %s", sym->name);
+    }
+    print("\n");
+}
+
+void
+dump_first(grammar_t grammar)
+{
+    print("-- First:\n");
+    for (struct symbol * sym = grammar->symlist.first ; sym; sym = sym->next) {
+        print("  %s :%s", sym->name, sym->nullable ? " (e)" : "");
+        dump_bitset(grammar, sym->first);
+    }
+    print("--\n");
+}
+
+void
+dump_follow(grammar_t grammar)
+{
+    print("-- Follow:\n");
+    for (struct symbol * sym = grammar->symlist.first ; sym; sym = sym->next) {
+        print("  %s :", sym->name);
+        dump_bitset(grammar, sym->follow);
+    }
+    print("--\n");
+}
+
 void
 find_nullable(grammar_t grammar)
 {
