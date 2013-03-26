@@ -3,13 +3,16 @@
 CC = clang
 CFLAGS += -g -O0 -std=c99 -pedantic -pedantic-errors -D_GNU_SOURCE
 
+OBJS = main.o yy.o bnf.o rc.o strarr.o strhash.o \
+       grammar.o lr0.o bitset.o print.o
+
 all: main.exe
 clean:
-	-rm *.o yy.c bnf.c bnf.h
+	-rm $(OBJS) yy.c bnf.c bnf.h
 
 yy.o : yy.c bnf.h
 
-main.exe : main.o yy.o bnf.o rc.o strarr.o strhash.o grammar.o lr0.o bitset.o
+main.exe : $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $^
 
 %.o : %.c

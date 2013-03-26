@@ -1,6 +1,7 @@
-#include "yy.h"
 
+#include "yy.h"
 #include "grammar.h"
+#include "print.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -29,6 +30,8 @@ main(int argc, char **argv)
         fprintf(stderr, "Usage: %s filename.yy\n", argv[0]);
         return 1;
     }
+
+    print_options("grammar,first,follow");
 
     struct theparser tp;
     tp.pars.parse = do_parse;
