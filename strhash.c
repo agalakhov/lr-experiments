@@ -1,5 +1,7 @@
 #include "strhash.h"
 
+#include "common.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -9,8 +11,6 @@
 #define MAX_BUCKETS 256
 #define HSH_BASIS   2166136261
 #define HSH_PRIME   16777619
-
-#define container_of(ptr, type, member) ((type *)((char *)(ptr) - offsetof(type,member)))
 
 struct bucket {
     struct bucket * next;
