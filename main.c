@@ -31,7 +31,7 @@ main(int argc, char **argv)
         return 1;
     }
 
-    print_options("grammar,symbols,first,follow");
+    print_options("grammar,symbols,first,follow,lr0-kernels,lr0-closures");
 
     struct theparser tp;
     tp.pars.parse = do_parse;

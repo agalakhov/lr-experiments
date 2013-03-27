@@ -2,10 +2,11 @@
 
 #include "grammar_i.h"
 
+#include "print.h"
+
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -134,13 +135,13 @@ cmp_point(const void *a, const void *b)
 static void
 print_point(const struct lr0_point * pt, const char *prefix)
 {
-    printf("%s%s ::=", prefix, pt->rule->sym->name);
+    print("%s%s ::=", prefix, pt->rule->sym->name);
     for (unsigned i = 0; i < pt->pos; ++i)
-        printf(" %s", pt->rule->rs[i].sym->name);
-    printf(" _");
+        print(" %s", pt->rule->rs[i].sym->name);
+    print(" _");
     for (unsigned i = pt->pos; i < pt->rule->length; ++i)
-        printf(" %s", pt->rule->rs[i].sym->name);
-    printf("\n");
+        print(" %s", pt->rule->rs[i].sym->name);
+    print("\n");
 }
 
 
@@ -212,9 +213,7 @@ lr0_goto(grammar_t grammar, struct lr0_point closure[], unsigned nclosure)
     for (unsigned i = 0; i < nsym; ++i) {
         qsort(scratch[i].s.state->points, scratch[i].s.state->npoints, sizeof(struct lr0_point), cmp_point);
         scratch[i].s.state = commit_state(scratch[i].s.state);
-        printf("    [%s] -> %u\n", scratch[i].sym->name, scratch[i].s.state->id);
-//        for (unsigned j = 0; j < scratch[i].kernel->npoints; ++j)
-//            print_point(&(scratch[i].kernel->points[j]), "    ");
+        printo(P_LR0_CLOSURES, "    [%s] -> %u\n", scratch[i].sym->name, scratch[i].s.state->id);
     }
     return nsym;
 }
@@ -236,11 +235,16 @@ build_lr0(grammar_t grammar)
 
     unsigned cookie = 42;
     for (struct lr0_state * s = data->process_first; s; s = s->list_next) {
-        printf("\nState %u:\n", s->id);
+        printo(P_LR0_KERNELS, "\nState %u:\n", s->id);
         struct lr0_point points[s->npoints + grammar->n_rules];
         unsigned n = lr0_closure(points, s, ++cookie);
-        for (unsigned i = 0; i < n; ++i)
-            print_point(&points[i], "  ");
+        if (print_opt(P_LR0_KERNELS)) {
+            for (unsigned i = 0; i < n; ++i) {
+                if (! print_opt(P_LR0_CLOSURES) && (i >= s->npoints))
+                    break;
+                print_point(&points[i], "  ");
+            }
+        }
         lr0_goto(grammar, points, n);
     }
 

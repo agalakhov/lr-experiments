@@ -246,7 +246,7 @@ grammar_complete(grammar_t grammar)
     if (print_opt(P_FOLLOW))
         dump_follow(grammar);
 
-//    build_lr0(grammar);
+    build_lr0(grammar);
 
 }
 
