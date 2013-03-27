@@ -1,5 +1,7 @@
 #include "rc.h"
 
+#include "common.h"
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -10,7 +12,7 @@ struct refc {
     char     data[];
 };
 
-#define TO_REFC(x) ((struct refc *)((char *)(x) - offsetof(struct refc, data)))
+#define TO_REFC(x) container_of(x, struct refc, data)
 
 void *
 rcalloc(size_t size)
@@ -38,7 +40,6 @@ rcunref(void *ptr)
         struct refc *s = TO_REFC(ptr);
         --(s->cnt);
         if (! s->cnt) {
-            //printf("FREE[%s]\n", (const char*)ptr);
             free(s);
         }
     }
