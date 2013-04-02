@@ -174,7 +174,7 @@ lr0_closure(struct lr0_point points[], struct lr0_state * kernel, unsigned cooki
 }
 
 static unsigned
-lr0_goto(grammar_t grammar, struct lr0_point closure[], unsigned nclosure)
+lr0_goto(grammar_t grammar, struct lr0_state * state, struct lr0_point closure[], unsigned nclosure)
 {
     const unsigned nsymmax = grammar->n_terminals + grammar->n_nonterminals;
     unsigned nsym = 0;
@@ -210,9 +210,12 @@ lr0_goto(grammar_t grammar, struct lr0_point closure[], unsigned nclosure)
     }
     /* Done - get the result */
     qsort(scratch, nsym, sizeof(struct lr0_go), cmp_goto);
+    state->gototab = calloc(1, sizeof_struct_lr0_gototab(nsym));
+    state->gototab->ngo = nsym;
     for (unsigned i = 0; i < nsym; ++i) {
         qsort(scratch[i].s.state->points, scratch[i].s.state->npoints, sizeof(struct lr0_point), cmp_point);
         scratch[i].s.state = commit_state(scratch[i].s.state);
+        memcpy(&(state->gototab->go[i]), &(scratch[i]), sizeof(struct lr0_go));
         printo(P_LR0_CLOSURES, "    [%s] -> %u\n", scratch[i].sym->name, scratch[i].s.state->id);
     }
     return nsym;
@@ -245,7 +248,7 @@ build_lr0(grammar_t grammar)
                 print_point(&points[i], "  ");
             }
         }
-        lr0_goto(grammar, points, n);
+        lr0_goto(grammar, s, points, n);
     }
 
 }
