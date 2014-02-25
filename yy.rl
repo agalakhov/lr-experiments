@@ -21,6 +21,10 @@
                 '%' word => { token(PRAGMA); };
                 '::='    => { token(IS); };
                 '.'      => { token(DOT); };
+                '('      => { token(LPAREN); };
+                ')'      => { token(RPAREN); };
+                '{'      => { token(LCURL); };
+                '}'      => { token(RCURL); };
 
             *|;
 
@@ -40,6 +44,8 @@ parse_machine(struct parser *pars, const char *s, size_t len)
     const char *eof = pe;
     const char *ts, *te;
     int act;
+
+    int curllevel = 0;
 
     %% write init;
     %% write exec;

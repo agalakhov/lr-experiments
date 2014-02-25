@@ -20,7 +20,7 @@ rules ::= rules rule.
 
 rule ::= PRAGMA.
 
-rule ::= WORD(W) IS right(R) DOT.
+rule ::= WORD(W) IS right(R) DOT action.
 {
     grammar_nonterminal(grammar, W, strarr_size(R), strarr_data(R));
     rcunref((void*)W);
@@ -43,9 +43,15 @@ rightlist(X) ::= .
     X = strarr_create(128);
 }
 
-rightlist(X) ::= rightlist(R) WORD(W).
+rightlist(X) ::= rightlist(R) WORD(W) specifier.
 {
     X = strarr_push(R, W);
     rcunref((void*)W);
 }
+
+specifier ::= .
+specifier ::= LPAREN WORD RPAREN.
+
+action ::= .
+action ::= LCURL RCURL.
 
