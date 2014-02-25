@@ -10,6 +10,8 @@
 static void
 dump_bitset(grammar_t grammar, const bitset_t set)
 {
+    if (set_has(set, 0))
+        print(" $");
     for (struct symbol * sym = grammar->symlist.first ; sym; sym = sym->next) {
         if (set_has(set, sym->id))
             print(" %s", sym->name);
@@ -117,6 +119,7 @@ find_follow(grammar_t grammar)
         if (! sym->follow)
             abort();
     }
+    set_add(grammar->start.sym->follow, 0);
     bool chg;
     do {
         chg = false;
