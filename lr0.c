@@ -221,7 +221,6 @@ lr0_goto(grammar_t grammar, struct lr0_state * state, struct lr0_point closure[]
     return nsym;
 }
 
-
 void
 build_lr0(grammar_t grammar)
 {
@@ -249,6 +248,20 @@ build_lr0(grammar_t grammar)
             }
         }
         lr0_goto(grammar, s, points, n);
+        /* FIXME this is SLR(1) */
+        for (unsigned i = 0; i < s->npoints; ++i) {
+            const struct lr0_point * p = &s->points[i];
+            if (p->pos == p->rule->length) {
+                /* This is reduceable. */
+                if (set_has(p->rule->sym->follow, 0))
+                    printo(P_LR0_CLOSURES, "    [$] :< %s\n", p->rule->sym->name);
+                for (const struct symbol * sym = grammar->symlist.first; sym; sym = sym->next) {
+                    if (set_has(p->rule->sym->follow, sym->id))
+                        printo(P_LR0_CLOSURES, "    [%s] :< %s\n", sym->name, p->rule->sym->name);
+                }
+            }
+        }
+        /* ENDFIXME */
     }
 
 }
