@@ -38,7 +38,8 @@ main(int argc, char **argv)
     tp.lemon = bnfparserAlloc(malloc);
     tp.grammar = grammar_alloc();
     int e = parse_file((struct parser *)&tp, argv[1]);
-    grammar_complete(tp.grammar);
+    if (! e)
+        grammar_complete(tp.grammar);
     grammar_free(tp.grammar);
     bnfparserFree(tp.lemon, free);
     if (e < 0) {
