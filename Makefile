@@ -21,5 +21,5 @@ main.exe : $(OBJS)
 %.c : %.rl
 	ragel -o $@ $<
 
-%.c %.h : %.ly
+%.c %.h : %.ly %.lt
 	lemon -q $<
