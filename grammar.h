@@ -2,6 +2,11 @@
 
 typedef struct grammar * grammar_t;
 
+struct grammar_rs {
+    const char * name;
+    const char * label;
+};
+
 grammar_t grammar_alloc(void);
 void grammar_free(grammar_t grammar);
 

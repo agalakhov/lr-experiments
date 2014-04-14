@@ -4,6 +4,8 @@
 # include "strarr.h"
 # include "grammar.h"
 # include <assert.h>
+# include <stdio.h>
+# include <stdlib.h>
 }
 
 %name {bnfparser}
@@ -21,12 +23,21 @@ rules ::= rules rule.
 rule ::= PRAGMA.
 rule ::= PRAGMA LCURL text RCURL.
 
-rule ::= WORD(W) IS right(R) DOT action(A).
+rule ::= left(L) IS right(R) DOT action(A).
 {
-    grammar_nonterminal(grammar, W, strarr_size(R), strarr_data(R), A);
-    rcunref((void*)W);
+    grammar_nonterminal(grammar, L, strarr_size(R), strarr_data(R), A);
+    rcunref((void*)L);
     strarr_unref(R);
     rcunref((void*)A);
+}
+
+%type left { const char * }
+%destructor left { rcunref((void*)$$); }
+
+left(X) ::= WORD(W) specifier(S).
+{
+    X = W;
+    rcunref((void*)S);
 }
 
 %type right { strarr_t }
@@ -45,16 +56,29 @@ rightlist(X) ::= .
     X = strarr_create(128);
 }
 
-rightlist(X) ::= rightlist(R) WORD(W) specifier.
+rightlist(X) ::= rightlist(R) WORD(W) specifier(S).
 {
     X = strarr_push(R, W);
     rcunref((void*)W);
+    rcunref((void*)S);
 }
 
-specifier ::= .
-specifier ::= LPAREN WORD RPAREN.
+%type specifier { const char * }
+%destructor specifier { rcunref((void*)$$); }
+
+specifier(X) ::= .
+{
+    X = NULL;
+}
+
+specifier(X) ::= LPAREN WORD(W) RPAREN.
+{
+    X = W;
+}
 
 %type action { const char * }
+
+%destructor action { rcunref((void*)$$); }
 
 action(X) ::= .
 {
@@ -86,3 +110,7 @@ text(X) ::= text(Y) TEXT(T).
     rcunref((void *)T);
 }
 
+%syntax_error {
+    printf("Syntax error\n");
+    abort();
+}
