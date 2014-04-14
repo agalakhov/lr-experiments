@@ -264,4 +264,11 @@ build_lr0(grammar_t grammar)
         /* ENDFIXME */
     }
 
+    for (struct lr0_state * s = data->process_first; s; ) {
+        struct lr0_state * f = s;
+        s = s->list_next;
+        free(f->gototab);
+        free(f);
+    }
+
 }
