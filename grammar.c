@@ -9,6 +9,7 @@
 #include "print.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 /*
  *  Constructor for grammar_t
@@ -33,12 +34,20 @@ destroy_terminal(struct terminal *t)
 }
 
 static void
+destroy_rule(struct rule *rule)
+{
+    if (rule->host_code)
+        free((void *)rule->host_code);
+    free(rule);
+}
+
+static void
 destroy_nonterminal(struct nonterminal *nt)
 {
     struct rule *r = nt->rules;
     while (r) {
         struct rule *n = r->next;
-        free(r);
+        destroy_rule(r);
         r = n;
     }
 }
@@ -103,7 +112,8 @@ grammar_free(grammar_t grammar)
 void
 grammar_nonterminal(grammar_t grammar,
                     const char *ls,
-                    unsigned rsn, const char *rs[])
+                    unsigned rsn, const char *rs[],
+                     const char *host_code)
 {
     struct symbol **s = (struct symbol **) strhash_find(grammar->hash, ls);
     if (! *s) {
@@ -122,6 +132,12 @@ grammar_nonterminal(grammar_t grammar,
     rule->sym = (*s);
     (*s)->s.nt.rules = rule;
     rule->id = ++(grammar->n_rules);
+    if (host_code) {
+        const char *hc = strdup(host_code);
+        if (! hc)
+            abort();
+        rule->host_code = hc;
+    }
 
     rule->length = rsn;
     for (unsigned i = 0; i < rsn; ++i)
@@ -201,7 +217,10 @@ dump_grammar(grammar_t grammar)
                     print("%s ::=", sym->name);
                     for (unsigned i = 0; i < r->length; ++i)
                         print(" %s", r->rs[i].sym->name);
-                    print(".\n");
+                    print(".");
+                    if (r->host_code)
+                        print(" {%s}", r->host_code);
+                    print("\n");
                 }
                 break;
         }

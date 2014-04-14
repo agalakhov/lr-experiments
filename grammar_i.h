@@ -68,6 +68,7 @@ struct rule {
     struct rule *           next; /* linked list */
     unsigned                id;
     struct symbol *         sym;  /* owner of the rule */
+    const char *            host_code;
     unsigned                length;
     union rsptr             rs[];
 };

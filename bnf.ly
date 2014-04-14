@@ -21,11 +21,12 @@ rules ::= rules rule.
 rule ::= PRAGMA.
 rule ::= PRAGMA LCURL text RCURL.
 
-rule ::= WORD(W) IS right(R) DOT action.
+rule ::= WORD(W) IS right(R) DOT action(A).
 {
-    grammar_nonterminal(grammar, W, strarr_size(R), strarr_data(R));
+    grammar_nonterminal(grammar, W, strarr_size(R), strarr_data(R), A);
     rcunref((void*)W);
     strarr_unref(R);
+    rcunref((void*)A);
 }
 
 %type right { strarr_t }
@@ -53,9 +54,22 @@ rightlist(X) ::= rightlist(R) WORD(W) specifier.
 specifier ::= .
 specifier ::= LPAREN WORD RPAREN.
 
-action ::= .
-action ::= LCURL RCURL.
-action ::= LCURL text RCURL.
+%type action { const char * }
+
+action(X) ::= .
+{
+    X = NULL;
+}
+
+action(X) ::= LCURL RCURL.
+{
+    X = rcstrdup("");
+}
+
+action(X) ::= LCURL text(T) RCURL.
+{
+    X = T;
+}
 
 %type text { const char * }
 %destructor text { rcunref((void*)$$); }
