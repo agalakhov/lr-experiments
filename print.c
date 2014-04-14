@@ -56,6 +56,12 @@ printo(enum print opt, const char *fmt, ...)
     va_end(ap);
 }
 
+static void
+print_options_free(void)
+{
+    set_free(options);
+}
+
 void
 print_options(const char *opts)
 {
@@ -64,6 +70,7 @@ print_options(const char *opts)
     options = set_alloc(P_MAX_);
     if (! options)
         abort();
+    atexit(print_options_free);
 
     const char *end;
     while (*opts) {
