@@ -113,7 +113,7 @@ void
 grammar_nonterminal(grammar_t grammar,
                     const char *ls,
                     unsigned rsn, const char *rs[],
-                     const char *host_code)
+                    const char *host_code)
 {
     struct symbol **s = (struct symbol **) strhash_find(grammar->hash, ls);
     if (! *s) {
