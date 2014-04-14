@@ -1,11 +1,57 @@
-program ::= expr.
-expr ::= expr PLUS term.
-expr ::= expr MINUS term.
-expr ::= PLUS term.
-expr ::= MINUS term.
-expr ::= term.
-term ::= term MUL fac.
-term ::= term DIV fac.
-term ::= fac.
-fac ::= NUMBER.
-fac ::= LPAREN expr RPAREN.
+FOO ::= program.
+
+program ::= expr(E).
+{
+	if (1) { printf("%lf\n", E); }
+}
+
+expr(Y) ::= expr(X) PLUS term(A).
+{
+	Y = X + A;
+}
+
+expr(Y) ::= expr(X) MINUS term(A).
+{
+	Y = X - A;
+}
+
+expr(Y) ::= PLUS term(A).
+{
+	Y = A;
+}
+
+expr(Y) ::= MINUS term(A).
+{
+	Y = - A;
+}
+
+expr(Y) ::= term(A).
+{
+	Y = A;
+}
+
+term(Y) ::= term(X) MUL fac(A).
+{
+	Y = X * A;
+}
+
+term(Y) ::= term(X) DIV fac(A).
+{
+	Y = X / A;
+}
+
+term(Y) ::= fac(A).
+{
+	Y = A;
+}
+
+fac(Y) ::= NUMBER(N).
+{
+	Y = atof(N).
+}
+
+fac(Y) ::= LPAREN expr(X) RPAREN.
+{
+	Y = X;
+}
+
