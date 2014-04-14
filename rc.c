@@ -34,15 +34,23 @@ rcref(void *ptr)
 }
 
 void
-rcunref(void *ptr)
+rcunref_free(void *ptr, rc_free_func_t freefunc)
 {
     if (ptr) {
         struct refc *s = TO_REFC(ptr);
         --(s->cnt);
         if (! s->cnt) {
+            if (freefunc)
+                freefunc(ptr);
             free(s);
         }
     }
+}
+
+void
+rcunref(void *ptr)
+{
+    rcunref_free(ptr, NULL);
 }
 
 void *

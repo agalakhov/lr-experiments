@@ -64,12 +64,18 @@ strarr_ref(strarr_t arr)
     rcref(arr);
 }
 
-void
-strarr_unref(strarr_t arr)
+static void
+strarr_destroy(void *ptr)
 {
+    strarr_t arr = (strarr_t) ptr;
     size_t i;
     for (i = 0; i < arr->size; ++i)
         rcunref((void*)arr->data[i]);
-    rcunref(arr);
+}
+
+void
+strarr_unref(strarr_t arr)
+{
+    rcunref_free(arr, strarr_destroy);
 }
 
