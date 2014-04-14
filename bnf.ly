@@ -19,6 +19,7 @@ rules ::= .
 rules ::= rules rule.
 
 rule ::= PRAGMA.
+rule ::= PRAGMA LCURL text RCURL.
 
 rule ::= WORD(W) IS right(R) DOT action.
 {
@@ -54,4 +55,20 @@ specifier ::= LPAREN WORD RPAREN.
 
 action ::= .
 action ::= LCURL RCURL.
+action ::= LCURL text RCURL.
+
+%type text { const char * }
+%destructor text { rcunref((void*)$$); }
+
+text(X) ::= TEXT(T).
+{
+    X = T;
+}
+
+text(X) ::= text(Y) TEXT(T).
+{
+    X = rcstrconcat(Y, T);
+    rcunref((void *)Y);
+    rcunref((void *)T);
+}
 

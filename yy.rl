@@ -11,8 +11,13 @@
     machine yylex;
     alphtype char;
 
-    word = [A-Za-z_][A-Za-z0-9_]+;
+    word = [A-Za-z_][A-Za-z0-9_]*;
 
+    text := |*
+                '{'      => { ++curllevel; token(TEXT); };
+                '}'      => { --curllevel; if (! curllevel) { fhold; fret; } token(TEXT); };
+                [^{}]+   => { token(TEXT); };
+            *|;
 
     main := |*
 
@@ -23,7 +28,7 @@
                 '.'      => { token(DOT); };
                 '('      => { token(LPAREN); };
                 ')'      => { token(RPAREN); };
-                '{'      => { token(LCURL); };
+                '{'      => { token(LCURL); ++curllevel; fcall text; };
                 '}'      => { token(RCURL); };
 
             *|;
@@ -44,6 +49,8 @@ parse_machine(struct parser *pars, const char *s, size_t len)
     const char *eof = pe;
     const char *ts, *te;
     int act;
+    int top;
+    int stack[128];
 
     int curllevel = 0;
 
