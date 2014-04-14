@@ -9,3 +9,4 @@ void *rcrealloc(void *ptr, size_t size);
 
 char *rcstrdup(const char *str);
 char *rcstrndup(const char *str, size_t len);
+char *rcstrconcat(const char* str1, const char* str2);

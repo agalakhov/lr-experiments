@@ -76,3 +76,16 @@ rcstrndup(const char *str, size_t len)
     s[len] = '\0';
     return s;
 }
+
+char *rcstrconcat(const char* str1, const char* str2)
+{
+    size_t len1 = strlen(str1);
+    size_t len2 = strlen(str2);
+    char *s = (char *)rcalloc(len1 + len2 + 1);
+    if (! s)
+        return NULL;
+    memcpy(s, str1, len1);
+    memcpy(s + len1, str2, len2);
+    s[len1 + len2] = '\0';
+    return s;
+}
