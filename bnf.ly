@@ -20,8 +20,31 @@ grammar ::= rules.
 rules ::= .
 rules ::= rules rule.
 
+
+
+rule ::= PRAGMA_INCLUDE LCURL text RCURL.
+
+rule ::= PRAGMA_NAME LCURL text RCURL.
+
+rule ::= PRAGMA_TYPE WORD LCURL text RCURL.
+
+rule ::= PRAGMA_DESTRUCTOR WORD LCURL text RCURL.
+
+rule ::= PRAGMA_FALLBACK WORD word_list DOT.
+word_list ::= .
+word_list ::= word_list WORD.
+
+rule ::= PRAGMA_START_SYMBOL WORD.
+
+
+
+%fallback PRAGMA
+    PRAGMA_NAME PRAGMA_INCLUDE PRAGMA_TOKEN_TYPE PRAGMA_TOKEN_DESTRUCTOR
+    PRAGMA_EXTRA_ARGUMENT PRAGMA_SYNTAX_ERROR
+.
 rule ::= PRAGMA.
 rule ::= PRAGMA LCURL text RCURL.
+
 
 rule ::= left(L) IS right(R) DOT action(A).
 {

@@ -23,13 +23,23 @@
 
                 space;
                 word     => { token(WORD); };
-                '%' word => { token(PRAGMA); };
                 '::='    => { token(IS); };
                 '.'      => { token(DOT); };
                 '('      => { token(LPAREN); };
                 ')'      => { token(RPAREN); };
                 '{'      => { token(LCURL); ++curllevel; fcall text; };
                 '}'      => { token(RCURL); };
+
+                '%destructor'       => { token(PRAGMA_DESTRUCTOR); };
+                '%extra_argument'   => { token(PRAGMA_EXTRA_ARGUMENT); };
+                '%fallback'         => { token(PRAGMA_FALLBACK); };
+                '%include'          => { token(PRAGMA_INCLUDE); };
+                '%name'             => { token(PRAGMA_NAME); };
+                '%start_symbol'     => { token(PRAGMA_START_SYMBOL); };
+                '%syntax_error'     => { token(PRAGMA_SYNTAX_ERROR); };
+                '%token_destructor' => { token(PRAGMA_TOKEN_DESTRUCTOR); };
+                '%token_type'       => { token(PRAGMA_TOKEN_TYPE); };
+                '%type'             => { token(PRAGMA_TYPE); };
 
             *|;
 
