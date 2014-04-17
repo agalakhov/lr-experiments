@@ -151,7 +151,10 @@ grammar_nonterminal(grammar_t grammar,
 void
 grammar_start_symbol(grammar_t grammar, const char *start)
 {
-    grammar->start.raw = strdup(start);
+    const char * s = strdup(start);
+    if (! s)
+        abort();
+    grammar->start.raw = s;
 }
 
 
