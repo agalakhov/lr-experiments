@@ -34,7 +34,11 @@ rule ::= PRAGMA_FALLBACK WORD word_list DOT.
 word_list ::= .
 word_list ::= word_list WORD.
 
-rule ::= PRAGMA_START_SYMBOL WORD.
+rule ::= PRAGMA_START_SYMBOL WORD(S).
+{
+    grammar_start_symbol(grammar, S);
+    rcunref((void*)S);
+}
 
 
 
