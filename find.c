@@ -127,15 +127,16 @@ find_follow(grammar_t grammar)
             if (lsym->type != NONTERMINAL)
                 continue;
             for (struct rule *r = lsym->s.nt.rules; r; r = r->next) {
-                for (unsigned i = r->length - 1; i > 0; --i) {
-                    struct symbol * rs1 = r->rs[i-1].sym;
-                    const struct symbol * rsi = r->rs[i].sym;
-                    chg = set_union(rs1->follow, rsi->first) || chg;
-                    if (rsi->nullable)
-                        chg = set_union(rs1->follow, rsi->follow) || chg;
-                }
-                if (r->length)
+                if (r->length) {
+                    for (unsigned i = r->length - 1; i > 0; --i) {
+                        struct symbol * rs1 = r->rs[i-1].sym;
+                        const struct symbol * rsi = r->rs[i].sym;
+                        chg = set_union(rs1->follow, rsi->first) || chg;
+                        if (rsi->nullable)
+                            chg = set_union(rs1->follow, rsi->follow) || chg;
+                    }
                     chg = set_union(r->rs[r->length - 1].sym->follow, lsym->follow) || chg;
+                }
             }
         }
     } while (chg);
