@@ -145,6 +145,16 @@ grammar_nonterminal(grammar_t grammar,
 }
 
 
+/*
+ * Set grammar start symbol
+ */
+void
+grammar_start_symbol(grammar_t grammar, const char *start)
+{
+    grammar->start.raw = strdup(start);
+}
+
+
 static void
 resolve_symbols(grammar_t grammar)
 {
@@ -164,6 +174,13 @@ resolve_symbols(grammar_t grammar)
                 rule->rs[i].sym = *s;
             }
         }
+    }
+    if (grammar->start.raw) {
+        struct symbol ** sym = (struct symbol **) strhash_find(grammar->hash, grammar->start.raw);
+        if (! *sym)
+            print("error: grammar has no symbol `%s\n'", grammar->start.raw);
+        free((void *)grammar->start.raw);
+        grammar->start.sym = *sym;
     }
 }
 
@@ -196,7 +213,7 @@ count_symbols(grammar_t grammar)
             if (! grammar->start.sym && sym->type == NONTERMINAL) {
                 print("note: using `%s' as start symbol\n", sym->name);
                 grammar->start.sym = sym;
-            } else {
+            } else if (sym != grammar->start.sym) {
                 print("warning: unused %s symbol `%s'\n", strtype(sym), sym->name);
             }
         }

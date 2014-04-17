@@ -10,6 +10,8 @@ struct grammar_rs {
 grammar_t grammar_alloc(void);
 void grammar_free(grammar_t grammar);
 
+void grammar_start_symbol(grammar_t grammar, const char *start);
+
 void grammar_nonterminal(grammar_t grammar,
                          const char *ls,
                          unsigned rsn, const char *rs[],
