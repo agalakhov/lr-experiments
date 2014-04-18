@@ -151,10 +151,7 @@ grammar_nonterminal(grammar_t grammar,
 void
 grammar_start_symbol(grammar_t grammar, const char *start)
 {
-    const char * s = strdup(start);
-    if (! s)
-        abort();
-    grammar->start.raw = s;
+    grammar->start.raw = strhash_key(strhash_find(grammar->hash, start));
 }
 
 
@@ -182,7 +179,6 @@ resolve_symbols(grammar_t grammar)
         struct symbol ** sym = (struct symbol **) strhash_find(grammar->hash, grammar->start.raw);
         if (! *sym)
             print("error: grammar has no symbol `%s\n'", grammar->start.raw);
-        free((void *)grammar->start.raw);
         grammar->start.sym = *sym;
     }
 }
