@@ -140,12 +140,21 @@ lr0_closure(lr0_machine_t mach, struct lr0_point points[], const struct lr0_stat
     return iw;
 }
 
+
+union lr0_goto_scratch {
+    struct lr0_go   go;
+    struct {
+        const struct symbol *   sym;
+        unsigned                ssize;
+    }               tmp;
+};
+
 static unsigned
 lr0_goto(lr0_machine_t mach, struct lr0_state * state, const struct lr0_point closure[], unsigned nclosure)
 {
     unsigned nsym = 0;
-    struct lr0_go scratch[mach->grammar_size];
-    struct lr0_go *symlookup[mach->grammar_size];
+    union lr0_goto_scratch scratch[mach->grammar_size];
+    union lr0_goto_scratch *symlookup[mach->grammar_size];
     memset(scratch, 0, sizeof(scratch));
     memset(symlookup, 0, sizeof(symlookup));
     /* First pass - determine used symbols and kernel sizes */
@@ -156,14 +165,16 @@ lr0_goto(lr0_machine_t mach, struct lr0_state * state, const struct lr0_point cl
         const struct symbol * fs = r->rs[closure[i].pos].sym;
         if (! symlookup[fs->id - 1]) {
             symlookup[fs->id - 1] = &scratch[nsym++];
-            symlookup[fs->id - 1]->sym = fs;
+            symlookup[fs->id - 1]->tmp.sym = fs;
         }
         ++(symlookup[fs->id - 1]->tmp.ssize);
     }
     for (unsigned i = 0; i < nsym; ++i) {
-        scratch[i].state = calloc(1, sizeof_struct_lr0_state(scratch[i].tmp.ssize));
-        if (! scratch[i].state)
+        const struct symbol * sym = scratch[i].tmp.sym;
+        scratch[i].go.state = calloc(1, sizeof_struct_lr0_state(scratch[i].tmp.ssize));
+        if (! scratch[i].go.state)
             abort();
+        scratch[i].go.sym = sym;
     }
     /* Second pass - actually build the kernels */
     for (unsigned i = 0; i < nclosure; ++i) {
@@ -171,23 +182,23 @@ lr0_goto(lr0_machine_t mach, struct lr0_state * state, const struct lr0_point cl
         if (r->length <= closure[i].pos) /* nothing to add */
             continue;
         const struct symbol * fs = r->rs[closure[i].pos].sym;
-        struct lr0_state * newstate = (struct lr0_state *) symlookup[fs->id - 1]->state;
+        struct lr0_state * newstate = (struct lr0_state *) symlookup[fs->id - 1]->go.state;
         newstate->points[newstate->npoints].rule = r;
         newstate->points[newstate->npoints].pos = closure[i].pos + 1;
         ++(newstate->npoints);
     }
     /* Done - get the result */
-    qsort(scratch, nsym, sizeof(struct lr0_go), cmp_goto);
+    qsort(scratch, nsym, sizeof(union lr0_goto_scratch), cmp_goto);
     struct lr0_gototab * gototab  = calloc(1, sizeof_struct_lr0_gototab(nsym));
     if (! gototab)
         abort();
     gototab->ngo = nsym;
     for (unsigned i = 0; i < nsym; ++i) {
-        struct lr0_state * newstate = (struct lr0_state *) scratch[i].state;
+        struct lr0_state * newstate = (struct lr0_state *) scratch[i].go.state;
         qsort(newstate->points, newstate->npoints, sizeof(struct lr0_point), cmp_point);
-        scratch[i].state = commit_state(mach, newstate);
-        memcpy(&(gototab->go[i]), &(scratch[i]), sizeof(struct lr0_go));
-        printo(P_LR0_CLOSURES, "    [%s] -> %u\n", scratch[i].sym->name, scratch[i].state->id);
+        scratch[i].go.state = commit_state(mach, newstate);
+        memcpy(&(gototab->go[i]), &(scratch[i].go), sizeof(struct lr0_go));
+        printo(P_LR0_CLOSURES, "    [%s] -> %u\n", scratch[i].go.sym->name, scratch[i].go.state->id);
     }
     state->gototab = gototab;
     return nsym;

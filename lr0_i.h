@@ -29,13 +29,8 @@ static inline size_t sizeof_struct_lr0_state(unsigned npoints) {
 }
 
 struct lr0_go {
-    const struct symbol *           sym;
-    union {
-        const struct lr0_state *    state;
-        struct {
-            unsigned                ssize;
-        }                   tmp;
-    };
+    const struct symbol *       sym;
+    const struct lr0_state *    state;
 };
 
 struct lr0_gototab {
