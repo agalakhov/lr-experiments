@@ -1,5 +1,7 @@
 main.exe
 *.o
+*.d
+bnf.out
 yy.c
 bnf.c
 bnf.h
