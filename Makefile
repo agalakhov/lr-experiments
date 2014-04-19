@@ -2,24 +2,37 @@
 
 CC = clang
 CFLAGS += -g -O0 -std=c11 -pedantic -pedantic-errors -D_GNU_SOURCE
+WFLAGS = -Wall -Wextra -Werror
 
-OBJS = main.o yy.o bnf.o rc.o strarr.o strhash.o \
-       grammar.o lr0.o bitset.o print.o find.o
+OBJS = main.o \
+       bitset.o find.o grammar.o lr0.o print.o rc.o strarr.o strhash.o \
+       yy.o bnf.o
+
+NOWARN = yy.o bnf.o
+$(NOWARN): WFLAGS =
+
+DEPS = $(OBJS:.o=.d)
 
 all: main.exe
 clean:
-	-rm $(OBJS) yy.c bnf.c bnf.h
+	-rm $(OBJS) $(DEPS) yy.c bnf.c bnf.h
 
-yy.o : yy.c bnf.h
+yy.o : yy.c bnf.c
 
 main.exe : $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $^
 
+%.d : %.c
+	$(CC) -M -MP -MQ $@ -MQ $(<:%.c=%.o) -o $@ $<
+
 %.o : %.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(WFLAGS) -c -o $@ $<
 
 %.c : %.rl
 	ragel -o $@ $<
 
 %.c %.h : %.ly %.lt
 	lemon -q $<
+
+include $(DEPS)
+

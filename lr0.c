@@ -56,7 +56,7 @@ struct lr0_data {
     struct lr0_state *          buckets[MAX_BUCKETS];
 };
 
-static struct lr0_data build_data = { 0 }; /* FIXME */
+static struct lr0_data build_data = { .nstates = 0 }; /* FIXME */
 
 static bool
 lr0_compare_state(const struct lr0_state *a, const struct lr0_state *b)

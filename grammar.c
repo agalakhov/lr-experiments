@@ -31,6 +31,7 @@ grammar_alloc(void)
 static void
 destroy_terminal(struct terminal *t)
 {
+    (void) t;
 }
 
 static void
