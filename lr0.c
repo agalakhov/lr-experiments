@@ -1,5 +1,6 @@
 #include "lr0.h"
 
+#include "lr0_i.h"
 #include "grammar_i.h"
 
 #include "print.h"
@@ -11,43 +12,6 @@
 #include <stdint.h>
 
 #define MAX_BUCKETS 256
-
-struct lr0_point {
-    const struct rule *         rule;
-    unsigned                    pos;
-};
-
-struct lr0_state {
-    unsigned                    id;
-    /* Search and processing handling */
-    struct lr0_state *          list_next;
-    const struct lr0_state *    hash_next;
-    /* Data */
-    const struct lr0_gototab *  gototab;
-    unsigned                    npoints;
-    struct lr0_point            points[];
-};
-static inline size_t sizeof_struct_lr0_state(unsigned npoints) {
-    return sizeof(struct lr0_state) + npoints * sizeof(struct lr0_point);
-}
-
-struct lr0_go {
-    const struct symbol *           sym;
-    union {
-        const struct lr0_state *    state;
-        struct {
-            unsigned                ssize;
-        }                   tmp;
-    };
-};
-
-struct lr0_gototab {
-    unsigned                    ngo;
-    struct lr0_go               go[];
-};
-static inline size_t sizeof_struct_lr0_gototab(unsigned ngoto) {
-    return sizeof(struct lr0_gototab) + ngoto * sizeof(struct lr0_go);
-}
 
 struct lr0_data {
     unsigned                    nstates;
@@ -90,17 +54,17 @@ commit_state(struct lr0_state * state)
     struct lr0_data * data = &build_data;
     unsigned hsh = lr0_hash_state(state) % MAX_BUCKETS;
     const struct lr0_state * s = data->buckets[hsh];
-    for ( ; s && ! lr0_compare_state(s, state); s = s->hash_next)
+    for ( ; s && ! lr0_compare_state(s, state); s = s->hash_search.next)
         ;
     if (s) {
         free(state);
         return s;
     }
     state->id = data->nstates;
-    state->list_next = NULL;
-    state->hash_next = data->buckets[hsh];
+    state->next = NULL;
+    state->hash_search.next = data->buckets[hsh];
     data->buckets[hsh] = state;
-    data->process_last->list_next = state;
+    data->process_last->next = state;
     data->process_last = state;
     ++(data->nstates);
     return state;
@@ -240,7 +204,7 @@ build_lr0(grammar_t grammar)
     data->process_last = state0;
 
     unsigned cookie = 42;
-    for (struct lr0_state * s = data->process_first; s; s = s->list_next) {
+    for (struct lr0_state * s = data->process_first; s; s = s->next) {
         printo(P_LR0_KERNELS, "\nState %u:\n", s->id);
         struct lr0_point points[s->npoints + grammar->n_rules];
         unsigned n = lr0_closure(points, s, ++cookie);
@@ -270,7 +234,7 @@ build_lr0(grammar_t grammar)
 
     for (struct lr0_state * s = data->process_first; s; ) {
         struct lr0_state * f = s;
-        s = s->list_next;
+        s = s->next;
         free((void *)f->gototab);
         free(f);
     }
