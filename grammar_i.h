@@ -25,8 +25,6 @@ struct grammar {
     unsigned        n_rules;
 
     union rsptr     start;
-
-    unsigned        recursion_cookie;
 };
 
 enum symbol_type {
@@ -54,7 +52,6 @@ struct symbol {
     bitset_t            follow;     /* FOLLOW(1) set of terminals */
 
     unsigned            use_count;
-    unsigned            recursion_stop;
 
     union {
         struct symbol * que_next;

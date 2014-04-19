@@ -14,7 +14,7 @@
 #define MAX_BUCKETS 256
 
 struct lr0_machine {
-    grammar_t                   grammar;
+    unsigned                    grammar_size;
     unsigned                    nstates;
     struct lr0_state *          process_first;
     struct lr0_state *          process_last;
@@ -111,10 +111,12 @@ print_point(const struct lr0_point * pt, const char *prefix)
 
 
 static unsigned
-lr0_closure(struct lr0_point points[], const struct lr0_state * kernel, unsigned cookie)
+lr0_closure(lr0_machine_t mach, struct lr0_point points[], const struct lr0_state * kernel)
 {
     unsigned ir = 0;
     unsigned iw = 0;
+    bool seen[mach->grammar_size];
+    memset(seen, 0, sizeof(seen));
     /* Copy kernel */
     for (; iw < kernel->npoints; ++iw)
         points[iw] = kernel->points[iw];
@@ -125,9 +127,9 @@ lr0_closure(struct lr0_point points[], const struct lr0_state * kernel, unsigned
             continue;
         const struct symbol * fs = r->rs[points[ir].pos].sym;
         if (fs->type == NONTERMINAL) {
-            if (fs->recursion_stop == cookie) /* already there */
+            if (seen[fs->id - 1]) /* already there */
                 continue;
-            ((struct symbol *) fs)->recursion_stop = cookie;
+            seen[fs->id - 1] = true;
             for (const struct rule * nr = fs->nt.rules; nr; nr = nr->next) {
                 points[iw].rule = nr;
                 points[iw].pos = 0;
@@ -141,11 +143,9 @@ lr0_closure(struct lr0_point points[], const struct lr0_state * kernel, unsigned
 static unsigned
 lr0_goto(lr0_machine_t mach, struct lr0_state * state, const struct lr0_point closure[], unsigned nclosure)
 {
-    grammar_t grammar = mach->grammar;
-    const unsigned nsymmax = grammar->n_terminals + grammar->n_nonterminals;
     unsigned nsym = 0;
-    struct lr0_go scratch[nsymmax];
-    struct lr0_go *symlookup[nsymmax];
+    struct lr0_go scratch[mach->grammar_size];
+    struct lr0_go *symlookup[mach->grammar_size];
     memset(scratch, 0, sizeof(scratch));
     memset(symlookup, 0, sizeof(symlookup));
     /* First pass - determine used symbols and kernel sizes */
@@ -199,7 +199,7 @@ lr0_build(grammar_t grammar)
     lr0_machine_t mach = calloc(1, sizeof(struct lr0_machine));
     if (! mach)
         abort();
-    mach->grammar = grammar;
+    mach->grammar_size = grammar->n_terminals + grammar->n_nonterminals;
     struct lr0_state * state0 = calloc(1, sizeof_struct_lr0_state(1));
     if (! state0)
         abort();
@@ -210,11 +210,10 @@ lr0_build(grammar_t grammar)
     mach->process_first = state0;
     mach->process_last = state0;
 
-    unsigned cookie = 42;
     for (struct lr0_state * s = mach->process_first; s; s = s->next) {
         printo(P_LR0_KERNELS, "\nState %u:\n", s->id);
         struct lr0_point points[s->npoints + grammar->n_rules];
-        unsigned n = lr0_closure(points, s, ++cookie);
+        unsigned n = lr0_closure(mach, points, s);
         if (print_opt(P_LR0_KERNELS)) {
             for (unsigned i = 0; i < n; ++i) {
                 if (! print_opt(P_LR0_CLOSURES) && (i >= s->npoints))
