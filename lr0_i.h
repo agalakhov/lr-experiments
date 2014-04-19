@@ -4,6 +4,7 @@
 
 #include <stddef.h>
 
+
 struct lr0_point {
     const struct rule *         rule;
     unsigned                    pos;

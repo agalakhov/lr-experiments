@@ -282,7 +282,7 @@ grammar_complete(grammar_t grammar)
     if (print_opt(P_FOLLOW))
         dump_follow(grammar);
 
-    build_lr0(grammar);
-
+    lr0_machine_t lr0m = lr0_build(grammar);
+    lr0_free(lr0m);
 }
 
