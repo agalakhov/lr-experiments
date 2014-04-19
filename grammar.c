@@ -45,9 +45,9 @@ destroy_rule(struct rule *rule)
 static void
 destroy_nonterminal(struct nonterminal *nt)
 {
-    struct rule *r = nt->rules;
+    struct rule *r = (struct rule *) nt->rules;
     while (r) {
-        struct rule *n = r->next;
+        struct rule *n = (struct rule *) r->next;
         destroy_rule(r);
         r = n;
     }
@@ -160,7 +160,7 @@ static void
 resolve_symbols(grammar_t grammar)
 {
     for (struct symbol * sym = grammar->symlist.first; sym; sym = sym->next) {
-        for (struct rule *rule = sym->nt.rules; rule; rule = rule->next) {
+        for (const struct rule * rule = sym->nt.rules; rule; rule = rule->next) {
             for (unsigned i = 0; i < rule->length; ++i) {
                 struct symbol ** s = (struct symbol **) strhash_find(grammar->hash, rule->rs[i].tmp.raw);
                 if (! *s) {
@@ -172,7 +172,7 @@ resolve_symbols(grammar_t grammar)
                     commit_symbol(grammar, *s);
                 }
                 ++((*s)->use_count);
-                rule->rs[i].sym = *s;
+                ((struct rule *) rule)->rs[i].sym = *s;
             }
         }
     }
@@ -230,7 +230,7 @@ dump_grammar(grammar_t grammar)
                 print("%%terminal %s.\n", sym->name);
                 break;
             case NONTERMINAL:
-                for (struct rule *r = sym->nt.rules; r; r = r->next) {
+                for (const struct rule *r = sym->nt.rules; r; r = r->next) {
                     print("%s ::=", sym->name);
                     for (unsigned i = 0; i < r->length; ++i)
                         print(" %s", r->rs[i].sym->name);

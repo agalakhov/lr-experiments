@@ -160,12 +160,12 @@ lr0_closure(struct lr0_point points[], const struct lr0_state * kernel, unsigned
         const struct rule * r = points[ir].rule;
         if (r->length <= points[ir].pos) /* nothing to add */
             continue;
-        struct symbol * fs = r->rs[points[ir].pos].sym;
+        const struct symbol * fs = r->rs[points[ir].pos].sym;
         if (fs->type == NONTERMINAL) {
             if (fs->recursion_stop == cookie) /* already there */
                 continue;
-            fs->recursion_stop = cookie;
-            for (struct rule * nr = fs->nt.rules; nr; nr = nr->next) {
+            ((struct symbol *) fs)->recursion_stop = cookie;
+            for (const struct rule * nr = fs->nt.rules; nr; nr = nr->next) {
                 points[iw].rule = nr;
                 points[iw].pos = 0;
                 ++iw;
@@ -189,7 +189,7 @@ lr0_goto(grammar_t grammar, struct lr0_state * state, const struct lr0_point clo
         const struct rule * r = closure[i].rule;
         if (r->length <= closure[i].pos) /* nothing to add */
             continue;
-        struct symbol * fs = r->rs[closure[i].pos].sym;
+        const struct symbol * fs = r->rs[closure[i].pos].sym;
         if (! symlookup[fs->id - 1]) {
             symlookup[fs->id - 1] = &scratch[nsym++];
             symlookup[fs->id - 1]->sym = fs;

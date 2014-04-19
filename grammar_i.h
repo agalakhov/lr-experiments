@@ -8,9 +8,9 @@
 
 union rsptr {
     struct {
-        const char *    raw;
-    }               tmp;
-    struct symbol *     sym;
+        const char *        raw;
+    }                   tmp;
+    const struct symbol *   sym;
 };
 
 struct grammar {
@@ -39,7 +39,7 @@ struct terminal {
 };
 
 struct nonterminal {
-    struct rule *   rules; /* linked list */
+    const struct rule *   rules; /* linked list */
 };
 
 struct symbol {
@@ -67,9 +67,9 @@ struct symbol {
 };
 
 struct rule {
-    struct rule *           next; /* linked list */
+    const struct rule *     next; /* linked list */
     unsigned                id;
-    struct symbol *         sym;  /* owner of the rule */
+    const struct symbol *   sym;  /* owner of the rule */
     const char *            host_code;
     unsigned                length;
     union rsptr             rs[];
