@@ -162,6 +162,8 @@ lr0_goto(lr0_machine_t mach, struct lr0_state * state, const struct lr0_point cl
     }
     for (unsigned i = 0; i < nsym; ++i) {
         scratch[i].state = calloc(1, sizeof_struct_lr0_state(scratch[i].tmp.ssize));
+        if (! scratch[i].state)
+            abort();
     }
     /* Second pass - actually build the kernels */
     for (unsigned i = 0; i < nclosure; ++i) {
@@ -177,6 +179,8 @@ lr0_goto(lr0_machine_t mach, struct lr0_state * state, const struct lr0_point cl
     /* Done - get the result */
     qsort(scratch, nsym, sizeof(struct lr0_go), cmp_goto);
     struct lr0_gototab * gototab  = calloc(1, sizeof_struct_lr0_gototab(nsym));
+    if (! gototab)
+        abort();
     gototab->ngo = nsym;
     for (unsigned i = 0; i < nsym; ++i) {
         struct lr0_state * newstate = (struct lr0_state *) scratch[i].state;
