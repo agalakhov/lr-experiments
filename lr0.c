@@ -13,7 +13,7 @@
 #define MAX_BUCKETS 256
 
 struct lr0_point {
-    struct rule *               rule;
+    const struct rule *         rule;
     unsigned                    pos;
 };
 
@@ -21,9 +21,9 @@ struct lr0_state {
     unsigned                    id;
     /* Search and processing handling */
     struct lr0_state *          list_next;
-    struct lr0_state *          hash_next;
+    const struct lr0_state *    hash_next;
     /* Data */
-    struct lr0_gototab *        gototab;
+    const struct lr0_gototab *  gototab;
     unsigned                    npoints;
     struct lr0_point            points[];
 };
@@ -32,11 +32,11 @@ static inline size_t sizeof_struct_lr0_state(unsigned npoints) {
 }
 
 struct lr0_go {
-    struct symbol *             sym;
+    const struct symbol *           sym;
     union {
-        struct lr0_state *      state;
+        const struct lr0_state *    state;
         struct {
-            unsigned            ssize;
+            unsigned                ssize;
         }                   tmp;
     };
 };
@@ -53,7 +53,7 @@ struct lr0_data {
     unsigned                    nstates;
     struct lr0_state *          process_first;
     struct lr0_state *          process_last;
-    struct lr0_state *          buckets[MAX_BUCKETS];
+    const struct lr0_state *    buckets[MAX_BUCKETS];
 };
 
 static struct lr0_data build_data = { .nstates = 0 }; /* FIXME */
@@ -84,12 +84,12 @@ lr0_hash_state(const struct lr0_state *state)
     return hsh;
 }
 
-static struct lr0_state *
+static const struct lr0_state *
 commit_state(struct lr0_state * state)
 {
     struct lr0_data * data = &build_data;
     unsigned hsh = lr0_hash_state(state) % MAX_BUCKETS;
-    struct lr0_state * s = data->buckets[hsh];
+    const struct lr0_state * s = data->buckets[hsh];
     for ( ; s && ! lr0_compare_state(s, state); s = s->hash_next)
         ;
     if (s) {
@@ -148,7 +148,7 @@ print_point(const struct lr0_point * pt, const char *prefix)
 
 
 static unsigned
-lr0_closure(struct lr0_point points[], struct lr0_state * kernel, unsigned cookie)
+lr0_closure(struct lr0_point points[], const struct lr0_state * kernel, unsigned cookie)
 {
     unsigned ir = 0;
     unsigned iw = 0;
@@ -157,7 +157,7 @@ lr0_closure(struct lr0_point points[], struct lr0_state * kernel, unsigned cooki
         points[iw] = kernel->points[iw];
     /* Add nonkernel points */
     for (; ir < iw; ++ir) {
-        struct rule * r = points[ir].rule;
+        const struct rule * r = points[ir].rule;
         if (r->length <= points[ir].pos) /* nothing to add */
             continue;
         struct symbol * fs = r->rs[points[ir].pos].sym;
@@ -176,7 +176,7 @@ lr0_closure(struct lr0_point points[], struct lr0_state * kernel, unsigned cooki
 }
 
 static unsigned
-lr0_goto(grammar_t grammar, struct lr0_state * state, struct lr0_point closure[], unsigned nclosure)
+lr0_goto(grammar_t grammar, struct lr0_state * state, const struct lr0_point closure[], unsigned nclosure)
 {
     const unsigned nsymmax = grammar->n_terminals + grammar->n_nonterminals;
     unsigned nsym = 0;
@@ -186,7 +186,7 @@ lr0_goto(grammar_t grammar, struct lr0_state * state, struct lr0_point closure[]
     memset(symlookup, 0, sizeof(symlookup));
     /* First pass - determine used symbols and kernel sizes */
     for (unsigned i = 0; i < nclosure; ++i) {
-        struct rule * r = closure[i].rule;
+        const struct rule * r = closure[i].rule;
         if (r->length <= closure[i].pos) /* nothing to add */
             continue;
         struct symbol * fs = r->rs[closure[i].pos].sym;
@@ -201,25 +201,27 @@ lr0_goto(grammar_t grammar, struct lr0_state * state, struct lr0_point closure[]
     }
     /* Second pass - actually build the kernels */
     for (unsigned i = 0; i < nclosure; ++i) {
-        struct rule * r = closure[i].rule;
+        const struct rule * r = closure[i].rule;
         if (r->length <= closure[i].pos) /* nothing to add */
             continue;
-        struct symbol * fs = r->rs[closure[i].pos].sym;
-        struct lr0_state * k = symlookup[fs->id - 1]->state;
-        k->points[k->npoints].rule = r;
-        k->points[k->npoints].pos = closure[i].pos + 1;
-        ++(k->npoints);
+        const struct symbol * fs = r->rs[closure[i].pos].sym;
+        struct lr0_state * newstate = (struct lr0_state *) symlookup[fs->id - 1]->state;
+        newstate->points[newstate->npoints].rule = r;
+        newstate->points[newstate->npoints].pos = closure[i].pos + 1;
+        ++(newstate->npoints);
     }
     /* Done - get the result */
     qsort(scratch, nsym, sizeof(struct lr0_go), cmp_goto);
-    state->gototab = calloc(1, sizeof_struct_lr0_gototab(nsym));
-    state->gototab->ngo = nsym;
+    struct lr0_gototab * gototab  = calloc(1, sizeof_struct_lr0_gototab(nsym));
+    gototab->ngo = nsym;
     for (unsigned i = 0; i < nsym; ++i) {
-        qsort(scratch[i].state->points, scratch[i].state->npoints, sizeof(struct lr0_point), cmp_point);
-        scratch[i].state = commit_state(scratch[i].state);
-        memcpy(&(state->gototab->go[i]), &(scratch[i]), sizeof(struct lr0_go));
+        struct lr0_state * newstate = (struct lr0_state *) scratch[i].state;
+        qsort(newstate->points, newstate->npoints, sizeof(struct lr0_point), cmp_point);
+        scratch[i].state = commit_state(newstate);
+        memcpy(&(gototab->go[i]), &(scratch[i]), sizeof(struct lr0_go));
         printo(P_LR0_CLOSURES, "    [%s] -> %u\n", scratch[i].sym->name, scratch[i].state->id);
     }
+    state->gototab = gototab;
     return nsym;
 }
 
@@ -269,7 +271,7 @@ build_lr0(grammar_t grammar)
     for (struct lr0_state * s = data->process_first; s; ) {
         struct lr0_state * f = s;
         s = s->list_next;
-        free(f->gototab);
+        free((void *)f->gototab);
         free(f);
     }
 
