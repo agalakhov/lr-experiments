@@ -1,7 +1,7 @@
 .PHONY: all clean
 
 CC = clang
-CFLAGS += -g -O0 -std=c99 -pedantic -pedantic-errors -D_GNU_SOURCE
+CFLAGS += -g -O0 -std=c11 -pedantic -pedantic-errors -D_GNU_SOURCE
 
 OBJS = main.o yy.o bnf.o rc.o strarr.o strhash.o \
        grammar.o lr0.o bitset.o print.o find.o

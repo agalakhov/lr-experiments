@@ -60,10 +60,10 @@ destroy_symbol(void *ptr)
         return;
     switch (sym->type) {
         case TERMINAL:
-            destroy_terminal(&sym->s.t);
+            destroy_terminal(&sym->t);
             break;
         case NONTERMINAL:
-            destroy_nonterminal(&sym->s.nt);
+            destroy_nonterminal(&sym->nt);
             break;
     }
     if (sym->first)
@@ -128,9 +128,9 @@ grammar_nonterminal(grammar_t grammar,
     struct rule *rule = calloc(1, sizeof_struct_rule(rsn));
     if (! rule)
         abort();
-    rule->next = (*s)->s.nt.rules;
+    rule->next = (*s)->nt.rules;
     rule->sym = (*s);
-    (*s)->s.nt.rules = rule;
+    (*s)->nt.rules = rule;
     rule->id = ++(grammar->n_rules);
     if (host_code) {
         const char *hc = strdup(host_code);
@@ -141,7 +141,7 @@ grammar_nonterminal(grammar_t grammar,
 
     rule->length = rsn;
     for (unsigned i = 0; i < rsn; ++i)
-        rule->rs[i].raw = strhash_key(strhash_find(grammar->hash, rs[i]));
+        rule->rs[i].tmp.raw = strhash_key(strhash_find(grammar->hash, rs[i]));
 }
 
 
@@ -151,7 +151,7 @@ grammar_nonterminal(grammar_t grammar,
 void
 grammar_start_symbol(grammar_t grammar, const char *start)
 {
-    grammar->start.raw = strhash_key(strhash_find(grammar->hash, start));
+    grammar->start.tmp.raw = strhash_key(strhash_find(grammar->hash, start));
 }
 
 
@@ -159,15 +159,15 @@ static void
 resolve_symbols(grammar_t grammar)
 {
     for (struct symbol * sym = grammar->symlist.first; sym; sym = sym->next) {
-        for (struct rule *rule = sym->s.nt.rules; rule; rule = rule->next) {
+        for (struct rule *rule = sym->nt.rules; rule; rule = rule->next) {
             for (unsigned i = 0; i < rule->length; ++i) {
-                struct symbol ** s = (struct symbol **) strhash_find(grammar->hash, rule->rs[i].raw);
+                struct symbol ** s = (struct symbol **) strhash_find(grammar->hash, rule->rs[i].tmp.raw);
                 if (! *s) {
                     *s = calloc(1, sizeof(struct symbol));
                     if (! *s)
                         abort();
                     (*s)->type = TERMINAL;
-                    (*s)->name = rule->rs[i].raw;
+                    (*s)->name = rule->rs[i].tmp.raw;
                     commit_symbol(grammar, *s);
                 }
                 ++((*s)->use_count);
@@ -175,10 +175,10 @@ resolve_symbols(grammar_t grammar)
             }
         }
     }
-    if (grammar->start.raw) {
-        struct symbol ** sym = (struct symbol **) strhash_find(grammar->hash, grammar->start.raw);
+    if (grammar->start.tmp.raw) {
+        struct symbol ** sym = (struct symbol **) strhash_find(grammar->hash, grammar->start.tmp.raw);
         if (! *sym)
-            print("error: grammar has no symbol `%s\n'", grammar->start.raw);
+            print("error: grammar has no symbol `%s\n'", grammar->start.tmp.raw);
         grammar->start.sym = *sym;
     }
 }
@@ -229,7 +229,7 @@ dump_grammar(grammar_t grammar)
                 print("%%terminal %s.\n", sym->name);
                 break;
             case NONTERMINAL:
-                for (struct rule *r = sym->s.nt.rules; r; r = r->next) {
+                for (struct rule *r = sym->nt.rules; r; r = r->next) {
                     print("%s ::=", sym->name);
                     for (unsigned i = 0; i < r->length; ++i)
                         print(" %s", r->rs[i].sym->name);

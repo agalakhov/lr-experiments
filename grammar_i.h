@@ -7,8 +7,10 @@
 #include <stdbool.h>
 
 union rsptr {
-    const char *    raw;
-    struct symbol * sym;
+    struct {
+        const char *    raw;
+    }               tmp;
+    struct symbol *     sym;
 };
 
 struct grammar {
@@ -61,7 +63,7 @@ struct symbol {
     union {
         struct terminal     t;
         struct nonterminal  nt;
-    }                   s;          /* contents */
+    };                              /* contents */
 };
 
 struct rule {

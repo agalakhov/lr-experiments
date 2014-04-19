@@ -35,8 +35,10 @@ struct lr0_go {
     struct symbol *             sym;
     union {
         struct lr0_state *      state;
-        unsigned                ssize;
-    }                       s;
+        struct {
+            unsigned            ssize;
+        }                   tmp;
+    };
 };
 
 struct lr0_gototab {
@@ -163,7 +165,7 @@ lr0_closure(struct lr0_point points[], struct lr0_state * kernel, unsigned cooki
             if (fs->recursion_stop == cookie) /* already there */
                 continue;
             fs->recursion_stop = cookie;
-            for (struct rule * nr = fs->s.nt.rules; nr; nr = nr->next) {
+            for (struct rule * nr = fs->nt.rules; nr; nr = nr->next) {
                 points[iw].rule = nr;
                 points[iw].pos = 0;
                 ++iw;
@@ -192,10 +194,10 @@ lr0_goto(grammar_t grammar, struct lr0_state * state, struct lr0_point closure[]
             symlookup[fs->id - 1] = &scratch[nsym++];
             symlookup[fs->id - 1]->sym = fs;
         }
-        ++(symlookup[fs->id - 1]->s.ssize);
+        ++(symlookup[fs->id - 1]->tmp.ssize);
     }
     for (unsigned i = 0; i < nsym; ++i) {
-        scratch[i].s.state = calloc(1, sizeof_struct_lr0_state(scratch[i].s.ssize));
+        scratch[i].state = calloc(1, sizeof_struct_lr0_state(scratch[i].tmp.ssize));
     }
     /* Second pass - actually build the kernels */
     for (unsigned i = 0; i < nclosure; ++i) {
@@ -203,7 +205,7 @@ lr0_goto(grammar_t grammar, struct lr0_state * state, struct lr0_point closure[]
         if (r->length <= closure[i].pos) /* nothing to add */
             continue;
         struct symbol * fs = r->rs[closure[i].pos].sym;
-        struct lr0_state * k = symlookup[fs->id - 1]->s.state;
+        struct lr0_state * k = symlookup[fs->id - 1]->state;
         k->points[k->npoints].rule = r;
         k->points[k->npoints].pos = closure[i].pos + 1;
         ++(k->npoints);
@@ -213,10 +215,10 @@ lr0_goto(grammar_t grammar, struct lr0_state * state, struct lr0_point closure[]
     state->gototab = calloc(1, sizeof_struct_lr0_gototab(nsym));
     state->gototab->ngo = nsym;
     for (unsigned i = 0; i < nsym; ++i) {
-        qsort(scratch[i].s.state->points, scratch[i].s.state->npoints, sizeof(struct lr0_point), cmp_point);
-        scratch[i].s.state = commit_state(scratch[i].s.state);
+        qsort(scratch[i].state->points, scratch[i].state->npoints, sizeof(struct lr0_point), cmp_point);
+        scratch[i].state = commit_state(scratch[i].state);
         memcpy(&(state->gototab->go[i]), &(scratch[i]), sizeof(struct lr0_go));
-        printo(P_LR0_CLOSURES, "    [%s] -> %u\n", scratch[i].sym->name, scratch[i].s.state->id);
+        printo(P_LR0_CLOSURES, "    [%s] -> %u\n", scratch[i].sym->name, scratch[i].state->id);
     }
     return nsym;
 }
@@ -229,7 +231,7 @@ build_lr0(grammar_t grammar)
     if (! state0)
         abort();
     state0->npoints = 1;
-    state0->points[0].rule = grammar->start.sym->s.nt.rules; /* first rule */
+    state0->points[0].rule = grammar->start.sym->nt.rules; /* first rule */
     state0->points[0].pos = 0;
     data->nstates = 1;
     data->process_first = state0;
