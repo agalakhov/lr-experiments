@@ -239,10 +239,10 @@ lr0_build(grammar_t grammar)
             if (p->pos == p->rule->length) {
                 /* This is reduceable. */
                 if (set_has(p->rule->sym->follow, 0))
-                    printo(P_LR0_CLOSURES, "    [$] :< %s\n", p->rule->sym->name);
+                    printo(P_LR0_CLOSURES, "    [$] :< %s :: {%s}\n", p->rule->sym->name, p->rule->host_code);
                 for (const struct symbol * sym = grammar->symlist.first; sym; sym = sym->next) {
                     if (set_has(p->rule->sym->follow, sym->id))
-                        printo(P_LR0_CLOSURES, "    [%s] :< %s\n", sym->name, p->rule->sym->name);
+                        printo(P_LR0_CLOSURES, "    [%s] :< %s :: {%s}\n", sym->name, p->rule->sym->name, p->rule->host_code);
                 }
             }
         }
