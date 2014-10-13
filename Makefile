@@ -5,7 +5,7 @@ CFLAGS += -g -O0 -std=c11 -pedantic -pedantic-errors -D_GNU_SOURCE
 WFLAGS = -Wall -Wextra -Werror
 
 OBJS = main.o \
-       bitset.o find.o grammar.o lr0.o print.o rc.o strarr.o strhash.o \
+       bitset.o find.o grammar.o lr0.o slr.o print.o rc.o strarr.o strhash.o \
        yy.o bnf.o
 
 NOWARN = yy.o bnf.o

@@ -21,6 +21,7 @@ struct lr0_state {
 
     /* Data */
     const struct lr0_gototab *  gototab;
+    const struct lr_reducetab * reducetab;
     unsigned                    npoints;
     struct lr0_point            points[];
 };
@@ -40,3 +41,13 @@ struct lr0_gototab {
 static inline size_t sizeof_struct_lr0_gototab(unsigned ngoto) {
     return sizeof(struct lr0_gototab) + ngoto * sizeof(struct lr0_go);
 }
+
+struct lr_reduce {
+    const struct symbol *	sym;
+    const struct rule *		rule;
+};
+
+struct lr_reducetab {
+    unsigned			nreduce;
+    struct lr_reduce		reduce[];
+};

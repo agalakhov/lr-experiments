@@ -14,6 +14,7 @@
 #define MAX_BUCKETS 256
 
 struct lr0_machine {
+    grammar_t			grammar;
     unsigned                    grammar_size;
     unsigned                    nstates;
     struct lr0_state *          process_first;
@@ -210,6 +211,7 @@ lr0_build(grammar_t grammar)
     lr0_machine_t mach = calloc(1, sizeof(struct lr0_machine));
     if (! mach)
         abort();
+    mach->grammar = grammar;
     mach->grammar_size = grammar->n_terminals + grammar->n_nonterminals;
     struct lr0_state * state0 = calloc(1, sizeof_struct_lr0_state(1));
     if (! state0)
@@ -233,20 +235,6 @@ lr0_build(grammar_t grammar)
             }
         }
         lr0_goto(mach, s, points, n);
-        /* FIXME this is SLR(1) */
-        for (unsigned i = 0; i < s->npoints; ++i) {
-            const struct lr0_point * p = &s->points[i];
-            if (p->pos == p->rule->length) {
-                /* This is reduceable. */
-                if (set_has(p->rule->sym->follow, 0))
-                    printo(P_LR0_CLOSURES, "    [$] :< %s :: {%s}\n", p->rule->sym->name, p->rule->host_code);
-                for (const struct symbol * sym = grammar->symlist.first; sym; sym = sym->next) {
-                    if (set_has(p->rule->sym->follow, sym->id))
-                        printo(P_LR0_CLOSURES, "    [%s] :< %s :: {%s}\n", sym->name, p->rule->sym->name, p->rule->host_code);
-                }
-            }
-        }
-        /* ENDFIXME */
     }
 
     return mach;

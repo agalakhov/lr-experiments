@@ -3,6 +3,7 @@
 #include "find.h"
 #include "lr0.h"
 #include "grammar_i.h"
+#include "slr.h"
 #include "strhash.h"
 #include "bitset.h"
 
@@ -283,6 +284,7 @@ grammar_complete(grammar_t grammar)
         dump_follow(grammar);
 
     lr0_machine_t lr0m = lr0_build(grammar);
+    slr_reduce_search(lr0m);
     lr0_free(lr0m);
 }
 
