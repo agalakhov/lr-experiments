@@ -70,3 +70,23 @@ set_union(bitset_t set, bitset_t xs)
     return ret;
 }
 
+size_t
+set_size(bitset_t set)
+{
+    static const unsigned long mask[] = {
+        (unsigned long) 0x5555555555555555,
+        (unsigned long) 0x3333333333333333,
+        (unsigned long) 0x0F0F0F0F0F0F0F0F,
+        (unsigned long) 0x00FF00FF00FF00FF,
+        (unsigned long) 0x0000FFFF0000FFFF,
+        (unsigned long) 0x00000000FFFFFFFF,
+    };
+    size_t ret = 0;
+    for (size_t i = 0; i < set->max; ++i) {
+        unsigned long cnt = set->data[i];
+        for (unsigned j = 0; (1u << j) < UNITSIZE; ++j)
+            cnt = (cnt & mask[j]) + ((cnt >> (1u << j)) & mask[j]);
+        ret += cnt;
+    }
+    return ret;
+}

@@ -10,3 +10,4 @@ void set_free(bitset_t set);
 bool set_has(bitset_t set, unsigned x);
 bool set_add(bitset_t set, unsigned x);
 bool set_union(bitset_t set, bitset_t xs);
+size_t set_size(bitset_t set);
