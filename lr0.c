@@ -248,6 +248,8 @@ lr0_free(lr0_machine_t mach)
         struct lr0_state * f = s;
         s = s->next;
         free((void *)f->gototab);
+        if (f->reducetab)
+            free((void *)f->reducetab);
         free(f);
     }
 }

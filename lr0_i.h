@@ -51,3 +51,6 @@ struct lr_reducetab {
     unsigned                    nreduce;
     struct lr_reduce            reduce[];
 };
+static inline size_t sizeof_struct_lr_reducetab(unsigned nreduce) {
+    return sizeof(struct lr_reducetab) + nreduce * sizeof(struct lr_reduce);
+}
