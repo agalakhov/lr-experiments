@@ -194,6 +194,7 @@ strtype(const struct symbol * sym)
         case NONTERMINAL:
             return "nonterminal";
     }
+    return "BUG";
 }
 
 static void

@@ -42,7 +42,7 @@ lr0_hash_state(const struct lr0_state *state)
 {
     uint32_t hsh = 0;
     for (unsigned i = 0; i < state->npoints; ++i) {
-        hsh += (uint32_t) state->points[i].rule;
+        hsh += (uint32_t) (intptr_t) state->points[i].rule;
         hsh += (uint32_t) state->points[i].pos;
     }
     hsh *= 2654435761; /* Knuth's algorithm */
