@@ -33,10 +33,12 @@ slr_reduce_search(lr0_machine_t lr0_machine)
         unsigned rtab_size = 0;
         for (unsigned i = 0; i < state->npoints; ++i) {
             const struct lr0_point * p = &state->points[i];
-            rtab_size += set_size(p->rule->sym->follow);
-            printo(P_LR0_CLOSURES, "sym $ %s\n", set_has(p->rule->sym->follow, 0) ? "X" : "-");
-            for (const struct symbol * sym = lr0_machine->grammar->symlist.first; sym; sym = sym->next)
+            if (p->pos == p->rule->length) {
+                rtab_size += set_size(p->rule->sym->follow);
+                printo(P_LR0_CLOSURES, "sym $ %s\n", set_has(p->rule->sym->follow, 0) ? "X" : "-");
+                for (const struct symbol * sym = lr0_machine->grammar->symlist.first; sym; sym = sym->next)
                 printo(P_LR0_CLOSURES, "sym %s %u %s\n", sym->name, sym->id, set_has(p->rule->sym->follow, sym->id) ? "X" : "-");
+            }
         }
         /* Calculate the reducdetab */
         struct lr_reducetab * rtab = calloc(1, sizeof_struct_lr_reducetab(rtab_size));
@@ -59,8 +61,7 @@ slr_reduce_search(lr0_machine_t lr0_machine)
                 }
             }
         }
-        printo(P_LR0_CLOSURES, "sizes %lu:%lu\n", nrtab, rtab_size);
-        assert(nrtab <= rtab_size);
+        assert(nrtab == rtab_size);
         rtab->nreduce = nrtab;
         state->reducetab = rtab;
     }
