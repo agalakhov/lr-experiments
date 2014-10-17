@@ -24,6 +24,12 @@ static const struct propt propts[] = {
     { "lr-reduce",      P_LR_REDUCE },
 };
 
+static const enum print prdepends[] = {
+    P_LR0_CLOSURES, P_LR0_KERNELS, P_MAX_,
+    P_LR0_GOTO,     P_LR0_KERNELS, P_MAX_,
+    P_LR_REDUCE,    P_LR0_KERNELS, P_MAX_,
+};
+
 /* Global variable */
 static bitset_t options = NULL;
 
@@ -86,5 +92,12 @@ print_options(const char *opts)
         opts = end;
         if (*opts)
             ++opts; /* skip the ',' char */
+    }
+
+    for (unsigned i = 0; i < ARRAY_SIZE(prdepends); ++i) {
+        if (set_has(options, prdepends[i])) {
+            for (++i; prdepends[i] != P_MAX_; ++i)
+                set_add(options, prdepends[i]);
+        }
     }
 }
