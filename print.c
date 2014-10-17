@@ -20,6 +20,8 @@ static const struct propt propts[] = {
     { "follow",         P_FOLLOW },
     { "lr0-kernels",    P_LR0_KERNELS },
     { "lr0-closures",   P_LR0_CLOSURES },
+    { "lr0-goto",       P_LR0_GOTO },
+    { "lr-reduce",      P_LR_REDUCE },
 };
 
 /* Global variable */

@@ -9,6 +9,8 @@ enum print {
     P_FOLLOW,
     P_LR0_KERNELS,
     P_LR0_CLOSURES,
+    P_LR0_GOTO,
+    P_LR_REDUCE,
 
     P_MAX_ /* END */
 };

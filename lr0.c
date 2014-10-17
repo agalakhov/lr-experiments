@@ -199,7 +199,7 @@ lr0_goto(lr0_machine_t mach, struct lr0_state * state, const struct lr0_point cl
         qsort(newstate->points, newstate->npoints, sizeof(struct lr0_point), cmp_point);
         scratch[i].go.state = commit_state(mach, newstate);
         memcpy(&(gototab->go[i]), &(scratch[i].go), sizeof(struct lr0_go));
-        printo(P_LR0_CLOSURES, "    [%s] -> %u\n", scratch[i].go.sym->name, scratch[i].go.state->id);
+        printo(P_LR0_GOTO, "    [%s] -> %u\n", scratch[i].go.sym->name, scratch[i].go.state->id);
     }
     state->gototab = gototab;
     return nsym;

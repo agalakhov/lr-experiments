@@ -19,7 +19,7 @@ struct lr0_machine {
 static inline void
 add_reduce(struct lr_reduce * rdc, const struct symbol * sym, const struct rule * rule)
 {
-    printo(P_LR0_CLOSURES, "    [%s] :< %s ~%u\n", (sym ? sym->name : "$"), rule->sym->name, rule->id);
+    printo(P_LR_REDUCE, "    [%s] :< %s ~%u\n", (sym ? sym->name : "$"), rule->sym->name, rule->id);
     rdc->sym = sym;
     rdc->rule = rule;
 }
@@ -28,7 +28,7 @@ void
 slr_reduce_search(lr0_machine_t lr0_machine)
 {
     for (struct lr0_state * state = lr0_machine->process_first; state; state = state->next) {
-        printo(P_LR0_CLOSURES, "\nState %u:\n", state->id);
+        printo(P_LR_REDUCE, "\nState %u:\n", state->id);
         /* Determine the reducetab size */
         unsigned rtab_size = 0;
         for (unsigned i = 0; i < state->npoints; ++i) {
