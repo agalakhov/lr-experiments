@@ -252,4 +252,5 @@ lr0_free(lr0_machine_t mach)
             free((void *)f->reducetab);
         free(f);
     }
+    free(mach);
 }
