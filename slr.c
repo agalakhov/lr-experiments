@@ -7,7 +7,7 @@
 
 // FIXME FIXME FIXME this sholud NOT be here!
 struct lr0_machine {
-    grammar_t			grammar;
+    grammar_t                   grammar;
     unsigned                    grammar_size;
     unsigned                    nstates;
     struct lr0_state *          process_first;

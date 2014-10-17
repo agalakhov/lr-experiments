@@ -43,11 +43,11 @@ static inline size_t sizeof_struct_lr0_gototab(unsigned ngoto) {
 }
 
 struct lr_reduce {
-    const struct symbol *	sym;
-    const struct rule *		rule;
+    const struct symbol *       sym;
+    const struct rule *         rule;
 };
 
 struct lr_reducetab {
-    unsigned			nreduce;
-    struct lr_reduce		reduce[];
+    unsigned                    nreduce;
+    struct lr_reduce            reduce[];
 };
