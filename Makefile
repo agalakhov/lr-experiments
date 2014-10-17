@@ -1,4 +1,6 @@
 .PHONY: all clean
+.DEFAULT_GOAL = all
+
 
 CC = clang
 CFLAGS += -g -O2 -std=c11 -pedantic -pedantic-errors -D_GNU_SOURCE
@@ -12,10 +14,13 @@ NOWARN = yy.o bnf.o
 $(NOWARN): WFLAGS =
 
 DEPS = $(OBJS:.o=.d)
+ifneq ($(MAKECMDGOALS),clean)
+  include $(DEPS)
+endif
 
 all: main.exe
 clean:
-	-rm $(OBJS) $(DEPS) yy.c bnf.c bnf.h
+	-rm -f $(OBJS) $(DEPS) yy.c bnf.c bnf.h
 
 yy.o : yy.c bnf.c
 
@@ -33,6 +38,3 @@ main.exe : $(OBJS)
 
 %.c %.h : %.ly %.lt
 	lemon -q $<
-
-include $(DEPS)
-
