@@ -232,8 +232,8 @@ dump_grammar(grammar_t grammar)
                 print("%%terminal %s.\n", sym->name);
                 break;
             case NONTERMINAL:
-                for (const struct rule *r = sym->nt.rules; r; r = r->next) {
-                    print("%s ::=", sym->name);
+                for (const struct rule * r = sym->nt.rules; r; r = r->next) {
+                    print("// %i\n%s ::=", r->id, sym->name);
                     for (unsigned i = 0; i < r->length; ++i)
                         print(" %s", r->rs[i].sym->name);
                     print(".");
