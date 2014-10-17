@@ -85,6 +85,11 @@ print_options(const char *opts)
         end = strchr(opts, ',');
         if (! end)
             end = opts + strlen(opts);
+        if (! strncmp("all", opts, end - opts)) {
+            for (unsigned i = 0; i < P_MAX_; ++i)
+                set_add(options, i);
+            break;
+        }
         for (unsigned i = 0; i < ARRAY_SIZE(propts); ++i) {
             if (! strncmp(propts[i].name, opts, end - opts))
                 set_add(options, propts[i].flag);
