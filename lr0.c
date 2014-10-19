@@ -15,7 +15,6 @@
 
 struct lr0_machine {
     grammar_t                   grammar;
-    unsigned                    grammar_size;
     unsigned                    nstates;
     struct lr0_state *          process_first;
     struct lr0_state *          process_last;
@@ -116,7 +115,7 @@ lr0_closure(lr0_machine_t mach, struct lr0_point points[], const struct lr0_stat
 {
     unsigned ir = 0;
     unsigned iw = 0;
-    bool seen[mach->grammar_size];
+    bool seen[mach->grammar->n_terminals + mach->grammar->n_nonterminals];
     memset(seen, 0, sizeof(seen));
     /* Copy kernel */
     for (; iw < kernel->npoints; ++iw)
@@ -154,8 +153,9 @@ static unsigned
 lr0_goto(lr0_machine_t mach, struct lr0_state * state, const struct lr0_point closure[], unsigned nclosure)
 {
     unsigned nsym = 0;
-    union lr0_goto_scratch scratch[mach->grammar_size];
-    union lr0_goto_scratch *symlookup[mach->grammar_size];
+    unsigned const grammar_size = mach->grammar->n_terminals + mach->grammar->n_nonterminals;
+    union lr0_goto_scratch scratch[grammar_size];
+    union lr0_goto_scratch *symlookup[grammar_size];
     memset(scratch, 0, sizeof(scratch));
     memset(symlookup, 0, sizeof(symlookup));
     /* First pass - determine used symbols and kernel sizes */
@@ -212,7 +212,6 @@ lr0_build(grammar_t grammar)
     if (! mach)
         abort();
     mach->grammar = grammar;
-    mach->grammar_size = grammar->n_terminals + grammar->n_nonterminals;
     struct lr0_state * state0 = calloc(1, sizeof_struct_lr0_state(1));
     if (! state0)
         abort();
