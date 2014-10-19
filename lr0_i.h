@@ -4,6 +4,10 @@
 
 #include <stddef.h>
 
+struct lr0_machine {
+    const struct grammar *      grammar;
+    const struct lr0_state *    first_state;
+};
 
 struct lr0_point {
     const struct rule *         rule;

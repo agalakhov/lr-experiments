@@ -8,14 +8,6 @@
 #include <assert.h>
 #include <stdlib.h>
 
-// FIXME FIXME FIXME this sholud NOT be here!
-struct lr0_machine {
-    grammar_t                   grammar;
-    unsigned                    grammar_size;
-    unsigned                    nstates;
-    struct lr0_state *          process_first;
-};
-
 static inline void
 add_reduce(struct lr_reduce * rdc, const struct symbol * sym, const struct rule * rule)
 {
@@ -27,7 +19,7 @@ add_reduce(struct lr_reduce * rdc, const struct symbol * sym, const struct rule 
 void
 slr_reduce_search(lr0_machine_t lr0_machine)
 {
-    for (struct lr0_state * state = lr0_machine->process_first; state; state = state->next) {
+    for (const struct lr0_state * state = lr0_machine->first_state; state; state = state->next) {
         printo(P_LR_REDUCE, "\nState %u:\n", state->id);
         /* Determine the reducetab size */
         unsigned rtab_size = 0;
@@ -59,6 +51,6 @@ slr_reduce_search(lr0_machine_t lr0_machine)
         }
         assert(nrtab == rtab_size);
         rtab->nreduce = nrtab;
-        state->reducetab = rtab;
+        ((struct lr0_state *)state)->reducetab = rtab;
     }
 }

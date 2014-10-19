@@ -13,11 +13,10 @@
 
 #define MAX_BUCKETS 256
 
-struct lr0_machine {
-    grammar_t                   grammar;
+struct lr0_machine_builder {
+    struct lr0_machine          machine;
     unsigned                    nstates;
-    struct lr0_state *          process_first;
-    struct lr0_state *          process_last;
+    struct lr0_state *          last_state;
     const struct lr0_state *    buckets[MAX_BUCKETS];
 };
 
@@ -49,23 +48,23 @@ lr0_hash_state(const struct lr0_state *state)
 }
 
 static const struct lr0_state *
-commit_state(lr0_machine_t mach, struct lr0_state * state)
+commit_state(struct lr0_machine_builder * builder, struct lr0_state * state)
 {
     unsigned hsh = lr0_hash_state(state) % MAX_BUCKETS;
-    const struct lr0_state * s = mach->buckets[hsh];
+    const struct lr0_state * s = builder->buckets[hsh];
     for ( ; s && ! lr0_compare_state(s, state); s = s->hash_search.next)
         ;
     if (s) {
         free(state);
         return s;
     }
-    state->id = mach->nstates;
+    state->id = builder->nstates;
     state->next = NULL;
-    state->hash_search.next = mach->buckets[hsh];
-    mach->buckets[hsh] = state;
-    mach->process_last->next = state;
-    mach->process_last = state;
-    ++(mach->nstates);
+    state->hash_search.next = builder->buckets[hsh];
+    builder->buckets[hsh] = state;
+    builder->last_state->next = state;
+    builder->last_state = state;
+    ++(builder->nstates);
     return state;
 }
 
@@ -150,10 +149,10 @@ union lr0_goto_scratch {
 };
 
 static unsigned
-lr0_goto(lr0_machine_t mach, struct lr0_state * state, const struct lr0_point closure[], unsigned nclosure)
+lr0_goto(struct lr0_machine_builder * builder, struct lr0_state * state, const struct lr0_point closure[], unsigned nclosure)
 {
     unsigned nsym = 0;
-    unsigned const grammar_size = mach->grammar->n_terminals + mach->grammar->n_nonterminals;
+    unsigned const grammar_size = builder->machine.grammar->n_terminals + builder->machine.grammar->n_nonterminals;
     union lr0_goto_scratch scratch[grammar_size];
     union lr0_goto_scratch *symlookup[grammar_size];
     memset(scratch, 0, sizeof(scratch));
@@ -197,7 +196,7 @@ lr0_goto(lr0_machine_t mach, struct lr0_state * state, const struct lr0_point cl
     for (unsigned i = 0; i < nsym; ++i) {
         struct lr0_state * newstate = (struct lr0_state *) scratch[i].go.state;
         qsort(newstate->points, newstate->npoints, sizeof(struct lr0_point), cmp_point);
-        scratch[i].go.state = commit_state(mach, newstate);
+        scratch[i].go.state = commit_state(builder, newstate);
         memcpy(&(gototab->go[i]), &(scratch[i].go), sizeof(struct lr0_go));
         printo(P_LR0_GOTO, "    [%s] -> %u\n", scratch[i].go.sym->name, scratch[i].go.state->id);
     }
@@ -208,24 +207,24 @@ lr0_goto(lr0_machine_t mach, struct lr0_state * state, const struct lr0_point cl
 lr0_machine_t
 lr0_build(grammar_t grammar)
 {
-    lr0_machine_t mach = calloc(1, sizeof(struct lr0_machine));
-    if (! mach)
+    struct lr0_machine_builder * builder = calloc(1, sizeof(struct lr0_machine_builder));
+    if (! builder)
         abort();
-    mach->grammar = grammar;
+    builder->machine.grammar = grammar;
     struct lr0_state * state0 = calloc(1, sizeof_struct_lr0_state(1));
     if (! state0)
         abort();
     state0->npoints = 1;
     state0->points[0].rule = grammar->start.sym->nt.rules; /* first rule */
     state0->points[0].pos = 0;
-    mach->nstates = 1;
-    mach->process_first = state0;
-    mach->process_last = state0;
+    builder->nstates = 1;
+    builder->machine.first_state = state0;
+    builder->last_state = state0;
 
-    for (struct lr0_state * s = mach->process_first; s; s = s->next) {
+    for (struct lr0_state * s = state0; s; s = s->next) {
         printo(P_LR0_KERNELS, "\nState %u:\n", s->id);
         struct lr0_point points[s->npoints + grammar->n_rules];
-        unsigned n = lr0_closure(mach, points, s);
+        unsigned n = lr0_closure(&builder->machine, points, s);
         if (print_opt(P_LR0_KERNELS)) {
             for (unsigned i = 0; i < n; ++i) {
                 if (! print_opt(P_LR0_CLOSURES) && (i >= s->npoints))
@@ -233,9 +232,13 @@ lr0_build(grammar_t grammar)
                 print_point(&points[i], "  ");
             }
         }
-        lr0_goto(mach, s, points, n);
+        lr0_goto(builder, s, points, n);
     }
-
+    lr0_machine_t mach = calloc(1, sizeof(struct lr0_machine));
+    if (! mach)
+        abort();
+    memcpy(mach, &builder->machine, sizeof(struct lr0_machine));
+    free(builder);
     return mach;
 }
 
@@ -243,13 +246,13 @@ lr0_build(grammar_t grammar)
 void
 lr0_free(lr0_machine_t mach)
 {
-    for (struct lr0_state * s = mach->process_first; s; ) {
-        struct lr0_state * f = s;
+    for (const struct lr0_state * s = mach->first_state; s; ) {
+        const struct lr0_state * f = s;
         s = s->next;
         free((void *)f->gototab);
         if (f->reducetab)
             free((void *)f->reducetab);
-        free(f);
+        free((void *)f);
     }
     free(mach);
 }
