@@ -1,5 +1,6 @@
 #include "grammar.h"
 
+#include "conflict.h"
 #include "find.h"
 #include "lr0.h"
 #include "grammar_i.h"
@@ -286,6 +287,7 @@ grammar_complete(grammar_t grammar)
 
     lr0_machine_t lr0m = lr0_build(grammar);
     slr_reduce_search(lr0m);
+    conflicts(lr0m);
     lr0_free(lr0m);
 }
 
