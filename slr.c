@@ -36,12 +36,17 @@ slr_reduce_search(lr0_machine_t lr0_machine)
         for (unsigned i = 0; i < state->npoints; ++i) {
             const struct lr0_point * p = &state->points[i];
             if (p->pos == p->rule->length) {
-                /* This is reduceable. */
                 if (set_has(p->rule->sym->follow, 0)) {
                     add_reduce(&rtab->reduce[nrtab], NULL, p->rule);
                     ++nrtab;
                 }
-                for (const struct symbol * sym = lr0_machine->grammar->symlist.first; sym; sym = sym->next) {
+            }
+        }
+        for (const struct symbol * sym = lr0_machine->grammar->symlist.first; sym; sym = sym->next) {
+            for (unsigned i = 0; i < state->npoints; ++i) {
+                const struct lr0_point * p = &state->points[i];
+                if (p->pos == p->rule->length) {
+                    /* This is reduceable. */
                     if (set_has(p->rule->sym->follow, sym->id)) {
                         add_reduce(&rtab->reduce[nrtab], sym, p->rule);
                         ++nrtab;
