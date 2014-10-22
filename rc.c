@@ -54,18 +54,26 @@ rcunref(void *ptr)
 }
 
 void *
-rcrealloc(void *ptr, size_t size)
+rcrealloc_free(void *ptr, size_t size, rc_free_func_t freefunc)
 {
     if (! ptr)
         return rcalloc(size);
     struct refc *s = TO_REFC(ptr);
     void *s1 = realloc(s, offsetof(struct refc, data) + size);
     if (! s1) {
+        if (freefunc)
+            freefunc(ptr);
         free(s);
         return NULL;
     }
     s = (struct refc *) s1;
     return &s->data;
+}
+
+void *
+rcrealloc(void *ptr, size_t size)
+{
+    return rcrealloc_free(ptr, size, NULL);
 }
 
 char *

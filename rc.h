@@ -9,6 +9,7 @@ void rcref(void *ptr);
 void rcunref(void *ptr);
 void rcunref_free(void *ptr, rc_free_func_t freefunc);
 void *rcrealloc(void *ptr, size_t size);
+void *rcrealloc_free(void *ptr, size_t size, rc_free_func_t freefunc);
 
 char *rcstrdup(const char *str);
 char *rcstrndup(const char *str, size_t len);
