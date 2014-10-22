@@ -114,11 +114,11 @@ grammar_free(grammar_t grammar)
  */
 void
 grammar_nonterminal(grammar_t grammar,
-                    const char *ls,
-                    unsigned rsn, const char *rs[],
+                    const struct grammar_element *ls,
+                    unsigned rsn, const struct grammar_element rs[],
                     const char *host_code)
 {
-    struct symbol **s = (struct symbol **) strhash_find(grammar->hash, ls);
+    struct symbol **s = (struct symbol **) strhash_find(grammar->hash, ls->name);
     if (! *s) {
         *s = calloc(1, sizeof(struct symbol));
         if (! *s)
@@ -144,7 +144,7 @@ grammar_nonterminal(grammar_t grammar,
 
     rule->length = rsn;
     for (unsigned i = 0; i < rsn; ++i)
-        rule->rs[i].tmp.raw = strhash_key(strhash_find(grammar->hash, rs[i]));
+        rule->rs[i].tmp.raw = strhash_key(strhash_find(grammar->hash, rs[i].name));
 }
 
 

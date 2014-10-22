@@ -2,7 +2,7 @@
 
 typedef struct grammar * grammar_t;
 
-struct grammar_rs {
+struct grammar_element {
     const char * name;
     const char * label;
 };
@@ -13,8 +13,8 @@ void grammar_free(grammar_t grammar);
 void grammar_start_symbol(grammar_t grammar, const char *start);
 
 void grammar_nonterminal(grammar_t grammar,
-                         const char *ls,
-                         unsigned rsn, const char *rs[],
+                         const struct grammar_element *ls,
+                         unsigned rsn, const struct grammar_element rs[],
                          const char *host_code);
 
 void grammar_complete(grammar_t grammar);

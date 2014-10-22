@@ -1,11 +1,22 @@
 %include {
 # include "bnf.h"
 # include "rc.h"
+# include "array.h"
 # include "strarr.h"
 # include "grammar.h"
 # include <assert.h>
 # include <stdio.h>
 # include <stdlib.h>
+
+static void
+grammar_element_free(void *ptr)
+{
+    struct grammar_element *elem = ptr;
+    rcunref((void*)elem->name);
+    if (elem->label)
+        rcunref((void*)elem->label);
+}
+
 }
 
 %name {bnfparser}
@@ -52,42 +63,47 @@ rule ::= PRAGMA LCURL text RCURL.
 
 rule ::= left(L) IS right(R) DOT action(A).
 {
-    grammar_nonterminal(grammar, L, strarr_size(R), strarr_data(R), A);
+    grammar_nonterminal(grammar, L, array_size(R), array_data(R), A);
+    grammar_element_free((void*)L);
     rcunref((void*)L);
-    strarr_unref(R);
+    array_unref(R);
     rcunref((void*)A);
 }
 
-%type left { const char * }
-%destructor left { rcunref((void*)$$); }
+%type left { const struct grammar_element * }
+%destructor left {
+  grammar_element_free((void*)$$);
+  free((void*)$$);
+}
 
 left(X) ::= WORD(W) specifier(S).
 {
-    X = W;
-    rcunref((void*)S);
+    struct grammar_element * x = rcalloc(sizeof(struct grammar_element));
+    x->name = W;
+    x->label = S;
+    X = x;
 }
 
-%type right { strarr_t }
-%destructor right { rcunref($$); }
+%type right { array_t }
+%destructor right { array_unref($$); }
 
-%type rightlist { strarr_t }
-%destructor rightlist { rcunref($$); }
+%type rightlist { array_t }
+%destructor rightlist { array_unref($$); }
 
 right(X) ::= rightlist(Y).
 {
-    X = strarr_shrink(Y);
+    X = Y;
 }
 
 rightlist(X) ::= .
 {
-    X = strarr_create(128);
+    X = array_create(32, sizeof(struct grammar_element), grammar_element_free);
 }
 
 rightlist(X) ::= rightlist(R) WORD(W) specifier(S).
 {
-    X = strarr_push(R, W);
-    rcunref((void*)W);
-    rcunref((void*)S);
+    struct grammar_element ge = { W, S };
+    X = array_push(R, &ge);
 }
 
 %type specifier { const char * }
