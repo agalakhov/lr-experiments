@@ -10,6 +10,15 @@ struct strarr {
     const char * data[];
 };
 
+static void
+strarr_destroy(void *ptr)
+{
+    strarr_t arr = (strarr_t) ptr;
+    size_t i;
+    for (i = 0; i < arr->size; ++i)
+        rcunref((void*)arr->data[i]);
+}
+
 strarr_t
 strarr_create(size_t reserve)
 {
@@ -24,7 +33,7 @@ strarr_create(size_t reserve)
 strarr_t
 strarr_shrink(strarr_t arr)
 {
-    arr = (strarr_t)rcrealloc(arr, sizeof(struct strarr) + arr->size * (sizeof(const char*)));
+    arr = (strarr_t)rcrealloc_free(arr, sizeof(struct strarr) + arr->size * (sizeof(const char*)), strarr_destroy);
     if (! arr)
         return NULL;
     arr->space = arr->size;
@@ -37,7 +46,7 @@ strarr_push(strarr_t arr, const char *str)
     ++(arr->size);
     if (arr->size > arr->space) {
         arr->space *= 2;
-        arr = (strarr_t)rcrealloc(arr, sizeof(struct strarr) + arr->space * (sizeof(const char*)));
+        arr = (strarr_t)rcrealloc_free(arr, sizeof(struct strarr) + arr->space * (sizeof(const char*)), strarr_destroy);
         if (! arr)
             return NULL;
     }
@@ -62,15 +71,6 @@ void
 strarr_ref(strarr_t arr)
 {
     rcref(arr);
-}
-
-static void
-strarr_destroy(void *ptr)
-{
-    strarr_t arr = (strarr_t) ptr;
-    size_t i;
-    for (i = 0; i < arr->size; ++i)
-        rcunref((void*)arr->data[i]);
 }
 
 void
