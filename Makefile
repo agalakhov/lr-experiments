@@ -9,6 +9,7 @@ WFLAGS = -Wall -Wextra -Werror
 OBJS = main.o \
        array.o \
        bitset.o \
+       codgen.o \
        conflict.o \
        find.o \
        grammar.o \

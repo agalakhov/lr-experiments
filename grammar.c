@@ -10,6 +10,8 @@
 
 #include "print.h"
 
+#include "codgen.h"
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -288,6 +290,9 @@ grammar_complete(grammar_t grammar)
     lr0_machine_t lr0m = lr0_build(grammar);
     slr_reduce_search(lr0m);
     conflicts(lr0m);
+    FILE *fd = fopen("out.C", "w");
+    codgen_c(fd, lr0m);
+    fclose(fd);
     lr0_free(lr0m);
 }
 
