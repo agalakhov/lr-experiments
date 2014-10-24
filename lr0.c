@@ -68,7 +68,7 @@ commit_state(struct lr0_machine_builder * builder, struct lr0_state * state)
     return state;
 }
 
-static int
+static signed
 cmp_goto(const void *a, const void *b)
 {
     const struct lr0_go *ap = (const struct lr0_go *) a;
@@ -80,7 +80,7 @@ cmp_goto(const void *a, const void *b)
     return 0;
 }
 
-static int
+static signed
 cmp_point(const void *a, const void *b)
 {
     const struct lr0_point *ap = (const struct lr0_point *) a;
