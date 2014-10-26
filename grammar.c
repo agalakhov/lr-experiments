@@ -146,7 +146,7 @@ grammar_nonterminal(grammar_t grammar,
 
     rule->length = rsn;
     for (unsigned i = 0; i < rsn; ++i)
-        rule->rs[i].tmp.raw = strhash_key(strhash_find(grammar->hash, rs[i].name));
+        rule->rs[i].sym.tmp.raw = strhash_key(strhash_find(grammar->hash, rs[i].name));
 }
 
 
@@ -166,17 +166,17 @@ resolve_symbols(grammar_t grammar)
     for (struct symbol * sym = grammar->symlist.first; sym; sym = sym->next) {
         for (const struct rule * rule = sym->nt.rules; rule; rule = rule->next) {
             for (unsigned i = 0; i < rule->length; ++i) {
-                struct symbol ** s = (struct symbol **) strhash_find(grammar->hash, rule->rs[i].tmp.raw);
+                struct symbol ** s = (struct symbol **) strhash_find(grammar->hash, rule->rs[i].sym.tmp.raw);
                 if (! *s) {
                     *s = calloc(1, sizeof(struct symbol));
                     if (! *s)
                         abort();
                     (*s)->type = TERMINAL;
-                    (*s)->name = rule->rs[i].tmp.raw;
+                    (*s)->name = rule->rs[i].sym.tmp.raw;
                     commit_symbol(grammar, *s);
                 }
                 ++((*s)->use_count);
-                ((struct rule *) rule)->rs[i].sym = *s;
+                ((struct rule *) rule)->rs[i].sym.sym = *s;
             }
         }
     }
@@ -238,7 +238,7 @@ dump_grammar(grammar_t grammar)
                 for (const struct rule * r = sym->nt.rules; r; r = r->next) {
                     print("// %i\n%s ::=", r->id, sym->name);
                     for (unsigned i = 0; i < r->length; ++i)
-                        print(" %s", r->rs[i].sym->name);
+                        print(" %s", r->rs[i].sym.sym->name);
                     print(".");
                     if (r->host_code)
                         print(" {%s}", r->host_code);

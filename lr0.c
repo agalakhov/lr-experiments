@@ -101,10 +101,10 @@ print_point(const struct lr0_point * pt, const char *prefix)
 {
     print("%s%s ::=", prefix, pt->rule->sym->name);
     for (unsigned i = 0; i < pt->pos; ++i)
-        print(" %s", pt->rule->rs[i].sym->name);
+        print(" %s", pt->rule->rs[i].sym.sym->name);
     print(" _");
     for (unsigned i = pt->pos; i < pt->rule->length; ++i)
-        print(" %s", pt->rule->rs[i].sym->name);
+        print(" %s", pt->rule->rs[i].sym.sym->name);
     print("\n");
 }
 
@@ -124,7 +124,7 @@ lr0_closure(lr0_machine_t mach, struct lr0_point points[], const struct lr0_stat
         const struct rule * r = points[ir].rule;
         if (r->length <= points[ir].pos) /* nothing to add */
             continue;
-        const struct symbol * fs = r->rs[points[ir].pos].sym;
+        const struct symbol * fs = r->rs[points[ir].pos].sym.sym;
         if (fs->type == NONTERMINAL) {
             if (seen[fs->id - 1]) /* already there */
                 continue;
@@ -162,7 +162,7 @@ lr0_goto(struct lr0_machine_builder * builder, struct lr0_state * state, const s
         const struct rule * r = closure[i].rule;
         if (r->length <= closure[i].pos) /* nothing to add */
             continue;
-        const struct symbol * fs = r->rs[closure[i].pos].sym;
+        const struct symbol * fs = r->rs[closure[i].pos].sym.sym;
         if (! symlookup[fs->id - 1]) {
             symlookup[fs->id - 1] = &scratch[nsym++];
             symlookup[fs->id - 1]->tmp.sym = fs;
@@ -181,7 +181,7 @@ lr0_goto(struct lr0_machine_builder * builder, struct lr0_state * state, const s
         const struct rule * r = closure[i].rule;
         if (r->length <= closure[i].pos) /* nothing to add */
             continue;
-        const struct symbol * fs = r->rs[closure[i].pos].sym;
+        const struct symbol * fs = r->rs[closure[i].pos].sym.sym;
         struct lr0_state * newstate = (struct lr0_state *) symlookup[fs->id - 1]->go.state;
         newstate->points[newstate->npoints].rule = r;
         newstate->points[newstate->npoints].pos = closure[i].pos + 1;

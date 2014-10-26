@@ -63,14 +63,20 @@ struct symbol {
     };                              /* contents */
 };
 
+struct right_side {
+    union rsptr             sym;
+    const char *            label;
+};
+
 struct rule {
     const struct rule *     next; /* linked list */
     unsigned                id;
     const struct symbol *   sym;  /* owner of the rule */
+    const char *            ls_label;
     const char *            host_code;
     unsigned                length;
-    union rsptr             rs[];
+    struct right_side       rs[];
 };
 static inline size_t sizeof_struct_rule(unsigned length) {
-    return sizeof(struct rule) + length * sizeof(union rsptr);
+    return sizeof(struct rule) + length * sizeof(struct right_side);
 }

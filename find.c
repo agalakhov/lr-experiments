@@ -56,7 +56,7 @@ find_nullable(grammar_t grammar)
                         for (const struct rule *r = sym->nt.rules; r; r = r->next) {
                             bool rule_nullable = true;
                             for (unsigned i = 0; i < r->length; ++i) {
-                                const struct symbol * rs = r->rs[i].sym;
+                                const struct symbol * rs = r->rs[i].sym.sym;
                                 if (rs->nullable)
                                     continue;
                                 rule_nullable = false;
@@ -96,7 +96,7 @@ find_first(grammar_t grammar)
                     {
                         for (const struct rule *r = sym->nt.rules; r; r = r->next) {
                             for (unsigned i = 0; i < r->length; ++i) {
-                                const struct symbol * rs = r->rs[i].sym;
+                                const struct symbol * rs = r->rs[i].sym.sym;
                                 chg = set_union(sym->first, rs->first) || chg;
                                 if (! rs->nullable)
                                     break;
@@ -129,13 +129,13 @@ find_follow(grammar_t grammar)
             for (const struct rule *r = lsym->nt.rules; r; r = r->next) {
                 if (r->length) {
                     for (unsigned i = r->length - 1; i > 0; --i) {
-                        const struct symbol * rs1 = r->rs[i-1].sym;
-                        const struct symbol * rsi = r->rs[i].sym;
+                        const struct symbol * rs1 = r->rs[i-1].sym.sym;
+                        const struct symbol * rsi = r->rs[i].sym.sym;
                         chg = set_union(rs1->follow, rsi->first) || chg;
                         if (rsi->nullable)
                             chg = set_union(rs1->follow, rsi->follow) || chg;
                     }
-                    chg = set_union(r->rs[r->length - 1].sym->follow, lsym->follow) || chg;
+                        chg = set_union(r->rs[r->length - 1].sym.sym->follow, lsym->follow) || chg;
                 }
             }
         }
