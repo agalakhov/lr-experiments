@@ -43,6 +43,12 @@ destroy_rule(struct rule *rule)
 {
     if (rule->host_code)
         free((void *)rule->host_code);
+    if (rule->ls_label)
+        free((void *)rule->ls_label);
+    for (unsigned i = 0; i < rule->length; ++i) {
+        if (rule->rs[i].label)
+            free((void *)rule->rs[i].label);
+    }
     free(rule);
 }
 
@@ -137,6 +143,12 @@ grammar_nonterminal(grammar_t grammar,
     rule->sym = (*s);
     (*s)->nt.rules = rule;
     rule->id = ++(grammar->n_rules);
+    if (ls->label) {
+        const char *lbl = strdup(ls->label);
+        if (! lbl)
+            abort();
+        rule->ls_label = lbl;
+    }
     if (host_code) {
         const char *hc = strdup(host_code);
         if (! hc)
@@ -145,8 +157,15 @@ grammar_nonterminal(grammar_t grammar,
     }
 
     rule->length = rsn;
-    for (unsigned i = 0; i < rsn; ++i)
+    for (unsigned i = 0; i < rsn; ++i) {
         rule->rs[i].sym.tmp.raw = strhash_key(strhash_find(grammar->hash, rs[i].name));
+        if (rs[i].label) {
+                const char *lbl = strdup(rs[i].label);
+            if (! lbl)
+                abort();
+            rule->rs[i].label = lbl;
+        }
+    }
 }
 
 
