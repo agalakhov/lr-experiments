@@ -37,7 +37,12 @@ rule ::= PRAGMA_INCLUDE LCURL text RCURL.
 
 rule ::= PRAGMA_NAME LCURL text RCURL.
 
-rule ::= PRAGMA_TYPE WORD LCURL text RCURL.
+rule ::= PRAGMA_TYPE WORD(N) LCURL text(T) RCURL.
+{
+    grammar_assign_type(grammar, N, T);
+    rcunref((void*)N);
+    rcunref((void*)T);
+}
 
 rule ::= PRAGMA_DESTRUCTOR WORD LCURL text RCURL.
 
@@ -59,7 +64,6 @@ rule ::= PRAGMA_START_SYMBOL WORD(S).
 .
 rule ::= PRAGMA.
 rule ::= PRAGMA LCURL text RCURL.
-
 
 rule ::= left(L) IS right(R) DOT action(A).
 {

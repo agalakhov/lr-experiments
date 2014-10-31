@@ -70,6 +70,8 @@ destroy_symbol(void *ptr)
     if (! sym)
         return;
     switch (sym->type) {
+        case UNKNOWN:
+            break;
         case TERMINAL:
             destroy_terminal(&sym->t);
             break;
@@ -81,11 +83,13 @@ destroy_symbol(void *ptr)
         set_free(sym->first);
     if (sym->follow)
         set_free(sym->follow);
+    if (sym->host_type)
+        free((void *)sym->host_type);
     free(sym);
 }
 
 static void
-commit_symbol(grammar_t grammar, struct symbol * sym)
+commit_symbol(grammar_t grammar, struct symbol *sym)
 {
     if (! grammar->symlist.first) {
         sym->next = NULL;
@@ -94,6 +98,8 @@ commit_symbol(grammar_t grammar, struct symbol * sym)
         return;
     }
     switch (sym->type) {
+        case UNKNOWN:
+            break;
         case TERMINAL:
             sym->next = grammar->symlist.first;
             grammar->symlist.first = sym;
@@ -116,6 +122,26 @@ grammar_free(grammar_t grammar)
     free(grammar);
 }
 
+/*
+ * Assign host type to a symbol.
+ */
+void
+grammar_assign_type(grammar_t grammar, const char *name, const char *type)
+{
+    struct symbol **s = (struct symbol **) strhash_find(grammar->hash, name);
+    if (! *s) {
+        *s = calloc(1, sizeof(struct symbol));
+        if (! *s)
+            abort();
+        (*s)->type = UNKNOWN;
+        (*s)->name = strhash_key((void **)s);
+    }
+    if ((*s)->host_type) {
+        print("error: reassiginig symbol type\n");
+        return;
+    }
+    (*s)->host_type = strdup(type);
+}
 
 /*
  * Add a new nonterminal rule to the grammar while building it.
@@ -134,6 +160,14 @@ grammar_nonterminal(grammar_t grammar,
         (*s)->type = NONTERMINAL;
         (*s)->name = strhash_key((void **)s);
         commit_symbol(grammar, *s);
+    }
+    if ((*s)->type == UNKNOWN) {
+        (*s)->type = NONTERMINAL;
+        commit_symbol(grammar, *s);
+    }
+    if ((*s)->type != NONTERMINAL) {
+        print("error: symbol `%s' is not a nonterminal\n", ls->name);
+        return;
     }
 
     struct rule *rule = calloc(1, sizeof_struct_rule(rsn));
@@ -190,8 +224,10 @@ resolve_symbols(grammar_t grammar)
                     *s = calloc(1, sizeof(struct symbol));
                     if (! *s)
                         abort();
+                    (*s)->name = strhash_key((void **)s);
+                }
+                if ((*s)->type == UNKNOWN) {
                     (*s)->type = TERMINAL;
-                    (*s)->name = rule->rs[i].sym.tmp.raw;
                     commit_symbol(grammar, *s);
                 }
                 ++((*s)->use_count);
@@ -211,6 +247,8 @@ static const char *
 strtype(const struct symbol * sym)
 {
     switch (sym->type) {
+        case UNKNOWN:
+            return "!undefined!";
         case TERMINAL:
             return "terminal";
         case NONTERMINAL:
@@ -226,6 +264,10 @@ count_symbols(grammar_t grammar)
     for (struct symbol * sym = grammar->symlist.first; sym; sym = sym->next, ++id) {
         sym->id = id;
         switch (sym->type) {
+            case UNKNOWN:
+                // FIXME this is actually impossible, UNKNOWN are not listed here
+                print("warning: symbol `%s' not defined in grammar\n", sym->name);
+                break;
             case TERMINAL:
                 ++(grammar->n_terminals);
                 break;
@@ -237,7 +279,7 @@ count_symbols(grammar_t grammar)
             if (! grammar->start.sym && sym->type == NONTERMINAL) {
                 print("note: using `%s' as start symbol\n", sym->name);
                 grammar->start.sym = sym;
-            } else if (sym != grammar->start.sym) {
+            } else if (sym != grammar->start.sym && sym->type != UNKNOWN) {
                 print("warning: unused %s symbol `%s'\n", strtype(sym), sym->name);
             }
         }
@@ -250,6 +292,8 @@ dump_grammar(grammar_t grammar)
     print("-- Grammar:\n");
     for (struct symbol * sym = grammar->symlist.first; sym; sym = sym->next) {
         switch (sym->type) {
+            case UNKNOWN:
+                break;
             case TERMINAL:
                 print("%%terminal %s.\n", sym->name);
                 break;

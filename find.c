@@ -49,6 +49,7 @@ find_nullable(grammar_t grammar)
         chg = false;
         for (struct symbol * sym = grammar->symlist.first ; sym; sym = sym->next) {
             switch (sym->type) {
+                case UNKNOWN:
                 case TERMINAL:
                     break;
                 case NONTERMINAL:
@@ -88,6 +89,8 @@ find_first(grammar_t grammar)
         chg = false;
         for (struct symbol * sym = grammar->symlist.first ; sym; sym = sym->next) {
             switch (sym->type) {
+                case UNKNOWN:
+                    break;
                 case TERMINAL:
                     /* Terminal's FIRST is the terminal itself */
                     set_add(sym->first, sym->id);

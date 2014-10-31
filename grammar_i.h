@@ -28,6 +28,7 @@ struct grammar {
 };
 
 enum symbol_type {
+    UNKNOWN = 0,
     TERMINAL,
     NONTERMINAL
 };
@@ -51,6 +52,7 @@ struct symbol {
     bitset_t            first;      /* FIRST(1) set of terminals */
     bitset_t            follow;     /* FOLLOW(1) set of terminals */
 
+    const char *        host_type;
     unsigned            use_count;
 
     union {

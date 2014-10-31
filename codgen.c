@@ -17,7 +17,10 @@ codgen_c(FILE *fd, lr0_machine_t machine)
             if (rule->host_code) {
                 fprintf(fd, "\nstatic void __reduce_%s_%u(\n", sym->name, rule->id);
                 for (unsigned i = 0; i < rule->length; ++i) {
-                    fprintf(fd, "  %s%s\n", rule->rs[i].label, (i + 1 == rule->length) ? "" : ",");
+                    fprintf(fd, "  %s %s%s\n",
+                            rule->rs[i].sym.sym->host_type,
+                            rule->rs[i].label,
+                            (i + 1 == rule->length) ? "" : ",");
                 }
                 fprintf(fd, ") {%s}\n", rule->host_code);
             }
