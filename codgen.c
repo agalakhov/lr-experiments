@@ -15,14 +15,17 @@ codgen_c(FILE *fd, lr0_machine_t machine)
             continue;
         for (const struct rule *rule = sym->nt.rules; rule; rule = rule->next) {
             if (rule->host_code) {
-                fprintf(fd, "\nstatic void __reduce_%s_%u(\n", sym->name, rule->id);
+                fprintf(fd, "\nstatic void __reduce_%s_%u(", sym->name, rule->id);
+                unsigned irule = 0;
                 for (unsigned i = 0; i < rule->length; ++i) {
-                    fprintf(fd, "  %s %s%s\n",
-                            rule->rs[i].sym.sym->host_type,
-                            rule->rs[i].label,
-                            (i + 1 == rule->length) ? "" : ",");
+                    if (rule->rs[i].label) {
+                        fprintf(fd, "%s\n  %s %s", irule ? "," : "",
+                                rule->rs[i].sym.sym->host_type ? rule->rs[i].sym.sym->host_type : "void*",
+                                rule->rs[i].label);
+                        ++irule;
+                    }
                 }
-                fprintf(fd, ") {%s}\n", rule->host_code);
+                fprintf(fd, "%s) {%s}\n", irule ? "\n" : "", rule->host_code);
             }
         }
     }
