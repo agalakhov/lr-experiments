@@ -1,4 +1,7 @@
-FOO ::= program.
+%type program { double }
+%type expr { double }
+%type term { double }
+%type fac { double }
 
 program ::= expr(E).
 {
