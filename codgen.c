@@ -74,7 +74,7 @@ emit_reduce_c(FILE *fd, const struct reduce *reduce)
     for (unsigned i = 0; i < reduce->nargs; ++i) {
         fprintf(fd, "#define %s (*__%s)\n", reduce->args[i].name, reduce->args[i].name);
     }
-    fprintf(fd, "static void __reduce_%s (", reduce->name);
+    fprintf(fd, "static inline void __reduce_%s (", reduce->name);
     for (unsigned i = 0; i < reduce->nargs; ++i) {
         fprintf(fd, "\n  %s %s*__%s", reduce->args[i].host_type,
                 (i ? "const " : ""), reduce->args[i].name);
@@ -86,10 +86,25 @@ emit_reduce_c(FILE *fd, const struct reduce *reduce)
     fprintf(fd, "\n");
 }
 
+static void
+emit_action_c(FILE *fd, const struct reduce *reduce)
+{
+    fprintf(fd, "static void __action_%s (struct stack *stack) {\n", reduce->name);
+    if (reduce->host_code) {
+        fprintf(fd, "    __reduce_%s(", reduce->name);
+        for (unsigned i = 0; i < reduce->nargs; ++i) {
+            fprintf(fd, "%s&stack[%i]", (i ? ", " : ""), reduce->args[i].stack_index);
+        }
+        fprintf(fd, ");\n");
+    } else {
+    }
+    fprintf(fd, "}\n\n");
+}
 
 void
 codgen_c(FILE *fd, lr0_machine_t machine)
 {
     fprintf(fd, "/* GENERATED FILE - DO NOT EDIT */\n\n");
     foreach_rule(machine, emit_reduce_c, fd);
+    foreach_rule(machine, emit_action_c, fd);
 }
