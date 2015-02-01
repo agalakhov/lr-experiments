@@ -1,0 +1,4 @@
+%start_symbol S.
+S ::= X a.
+X ::= a.
+X ::= .

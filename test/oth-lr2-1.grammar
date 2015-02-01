@@ -1,0 +1,10 @@
+%start_symbol S
+S ::= A B C D.
+A ::= a S.
+A ::= .
+B ::= b.
+B ::= C.
+C ::= c.
+C ::= D.
+D ::= d.
+D ::= a B.

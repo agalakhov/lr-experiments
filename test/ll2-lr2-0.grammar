@@ -1,0 +1,9 @@
+%start_symbol S
+S ::= left X.
+S ::= E sqright.
+S ::= F left.
+X ::= E right.
+X ::= F sqright.
+E ::= A.
+F ::= A.
+A ::= .

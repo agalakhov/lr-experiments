@@ -1,0 +1,9 @@
+%start_symbol A
+A ::= E B SL E.
+A ::= b e.
+B ::= b.
+B ::= o r.
+E ::= e.
+E ::= .
+SL ::= s SL.
+SL ::= s.

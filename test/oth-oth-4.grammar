@@ -1,0 +1,8 @@
+%start_symbol A
+A ::= A B.
+A ::= B C.
+B ::= x A.
+B ::= A y.
+B ::= C n.
+C ::= z.
+C ::= r.

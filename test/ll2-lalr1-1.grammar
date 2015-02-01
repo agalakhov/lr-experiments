@@ -1,0 +1,7 @@
+%start_symbol Sa
+Sa ::= S.
+S ::= L assign R.
+S ::= R.
+L ::= star R.
+L ::= id.
+R ::= L.

@@ -1,0 +1,7 @@
+%start_symbol TERM
+TERM ::= id.
+TERM ::= id INDEX.
+TERM ::= let LEXP.
+LEXP ::= INDEX LEXP.
+LEXP ::= id.
+INDEX ::= lpar TERM rpar.

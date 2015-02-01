@@ -1,0 +1,8 @@
+%start_symbol EXPR
+EXPR ::= EXPR mult EXPR.
+EXPR ::= TERM.
+TERM ::= TERM add TERM.
+TERM ::= FACTOR.
+FACTOR ::= num.
+FACTOR ::= lpar EXPR rpar.
+FACTOR ::= star EXPR.

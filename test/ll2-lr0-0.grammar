@@ -1,0 +1,4 @@
+%start_symbol S
+S ::= Block.
+S ::= left right.
+Block ::= left stmt right.

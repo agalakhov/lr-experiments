@@ -1,0 +1,7 @@
+%start_symbol S
+S ::= A.
+S ::= B.
+A ::= x A.
+A ::= a.
+B ::= x B.
+B ::= b.

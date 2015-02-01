@@ -1,0 +1,5 @@
+%start_symbol S
+S ::= A x B x.
+S ::= B y A y.
+A ::= w.
+B ::= w.

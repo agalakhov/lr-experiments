@@ -1,0 +1,12 @@
+%start_symbol Value
+Value ::= number V.
+Value ::= number.
+V ::= f Real.
+V ::= i Int.
+Real ::= IOpt dot.
+Real ::= BOpt plus.
+Int ::= IOpt plus.
+Int ::= BOpt dot.
+BOpt ::= Opt.
+IOpt ::= Opt.
+Opt ::= .

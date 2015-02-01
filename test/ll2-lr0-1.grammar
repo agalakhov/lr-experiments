@@ -1,0 +1,9 @@
+%start_symbol S
+S ::= Assign.
+S ::= Inc.
+Assign ::= Lv equals Rv.
+Inc ::= Lv plusplus.
+Inc ::= Lv.
+Rv ::=  Lv.
+Rv ::= num.
+Lv ::= id.

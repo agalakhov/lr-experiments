@@ -1,0 +1,6 @@
+%start_symbol S
+S ::= A d.
+A ::= a B.
+A ::= b B c.
+B ::= d A.
+B ::= .

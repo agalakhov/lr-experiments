@@ -1,0 +1,8 @@
+%start_symbol S
+S ::= mary Owns Object.
+Owns ::= had.
+Object ::= a Animal.
+Animal ::= Adverb Adjective Noun.
+Adverb ::= .
+Adjective ::= little.
+Noun ::= lamb.

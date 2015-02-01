@@ -1,0 +1,7 @@
+%start_symbol A
+A ::= b F.
+F ::= A x.
+F ::= B.
+B ::= x G.
+G ::= x B.
+G ::= .

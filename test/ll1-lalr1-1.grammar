@@ -1,0 +1,6 @@
+%start_symbol L
+L ::= V plus L.
+L ::= num.
+V ::= Var left Var plus V right.
+V ::= .
+Var ::= .

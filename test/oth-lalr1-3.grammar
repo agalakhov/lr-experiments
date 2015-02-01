@@ -1,0 +1,7 @@
+%start_symbol S
+S ::= a g d.
+S ::= a A c.
+S ::= b A d.
+S ::= b g c.
+A ::= B.
+B ::= g.

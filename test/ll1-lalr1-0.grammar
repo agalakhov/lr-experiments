@@ -1,0 +1,7 @@
+%start_symbol S
+S ::= id Sa.
+Sa ::= V assign E.
+Sa ::= .
+V ::= .
+E ::= id V.
+E ::= num.

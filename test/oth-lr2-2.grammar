@@ -1,0 +1,7 @@
+%start_symbol B
+B ::= A x y
+B ::= C.
+A ::= .
+A ::= x z.
+C ::= C w.
+C ::= v.

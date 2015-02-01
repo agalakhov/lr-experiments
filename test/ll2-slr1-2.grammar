@@ -1,0 +1,14 @@
+%start_symbol Line
+Line ::= Op.
+Line ::= Label.
+Op ::= Inst Operands.
+Label ::= id colon.    
+Operands ::= Src Src Dest.
+Dest ::= id.
+Dest ::= reg.
+Dest ::= left Src right.
+Src ::= Dest.
+Src ::= num.
+Inst ::= pneumonic.
+Inst ::= Macro.
+Macro ::= id.

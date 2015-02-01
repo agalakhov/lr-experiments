@@ -1,0 +1,9 @@
+%start_symbol P
+P ::= M star.
+P ::= .
+M ::= Q StarM.
+M ::= .
+StarM ::= leftstar M starright .
+StarM ::= left Q star right .
+Q ::= o.
+Q ::= .

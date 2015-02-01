@@ -1,0 +1,5 @@
+%start_symbol Emoticon
+Emoticon ::= Happy.
+Emoticon ::= Sad.
+Happy ::= colon right.
+Sad ::= colon left.

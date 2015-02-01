@@ -1,0 +1,7 @@
+%start_symbol A
+A ::= y B.
+A ::= x.
+A ::= B C.
+B ::= z B.
+B ::= u.
+C ::= s.

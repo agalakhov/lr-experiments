@@ -1,0 +1,4 @@
+%start_symbol A
+A ::= a b B C.
+B ::= C x.
+C ::= z.

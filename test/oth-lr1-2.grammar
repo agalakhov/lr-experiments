@@ -1,0 +1,14 @@
+%start_symbol S
+S ::= S semi C.
+S ::= left C right.
+S ::= star D star.
+C ::= A x.
+C ::= B y.
+D ::= A y.
+D ::= B x.
+A ::= E.
+A ::= id.
+B ::= E.
+B ::= num. 
+E ::= excl.
+E ::= left S right.

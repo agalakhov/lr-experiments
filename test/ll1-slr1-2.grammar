@@ -1,0 +1,20 @@
+%start_symbol Decl
+Decl ::= DeclSpecifiers Declarator.
+DeclSpecifiers ::= StorageClassSpecifier DeclSpecifiersOpt.
+DeclSpecifiers ::= TypeSpecifier DeclSpecifiersOpt.
+DeclSpecifiers ::= TypeQualifier DeclSpecifiersOpt.
+DeclSpecifiersOpt ::= DeclSpecifiers.
+DeclSpecifiersOpt ::= .
+StorageClassSpecifier ::= typedef.
+StorageClassSpecifier ::= static.
+TypeSpecifier ::= void.
+TypeSpecifier ::= short.
+TypeSpecifier ::= int.
+TypeQualifier ::= const.
+TypeQualifier ::= volatile.
+Declarator ::= PointerOpt DirectDeclarator.
+DirectDeclarator ::= id.
+PointerOpt ::= star TypeQualifierList PointerOpt.
+PointerOpt ::= .
+TypeQualifierList ::= TypeQualifier TypeQualifierList.
+TypeQualifierList ::= .

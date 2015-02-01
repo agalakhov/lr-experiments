@@ -1,0 +1,13 @@
+%start_symbol S
+S ::= apos Q.
+S ::= P.
+Q ::= T W.
+Q ::= E semi.
+P ::= T semi.
+P ::= E W.
+T ::= U.
+E ::= U.
+U ::= apos.
+W ::= star W.
+W ::= eight W.
+W ::= .

@@ -1,0 +1,8 @@
+%start_symbol S
+S ::= T.
+S ::= A.
+A ::= B.
+B ::= C.
+D ::= d.
+D ::= d D.
+D ::= .

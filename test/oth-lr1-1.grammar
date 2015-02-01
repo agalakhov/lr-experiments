@@ -1,0 +1,12 @@
+%start_symbol S
+S ::= S R.
+S ::= .
+R ::= s StructVar.
+R ::= u NVar.
+StructVar ::= Var semi.
+StructVar ::= Subvar colon.
+NVar ::= Var colon.
+NVar ::= Subvar semi.
+Var ::= V.
+Subvar ::= V.
+V ::= id.

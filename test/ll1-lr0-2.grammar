@@ -1,0 +1,6 @@
+%start_symbol S
+S ::= left Ses right.
+S ::= leftstar starright.
+Ses ::= S SL.
+SL ::= semi SL.
+SL ::= S.

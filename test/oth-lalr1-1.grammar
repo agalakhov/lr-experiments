@@ -1,0 +1,6 @@
+%start_symbol L
+L ::= V left args right.
+L ::= L equals Var left right.
+V ::= Var plus V.
+V ::= id.
+Var ::= id.

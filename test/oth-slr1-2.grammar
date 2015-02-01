@@ -1,0 +1,10 @@
+%start_symbol S
+S ::= E.
+E ::= B plus T.
+E ::= B star T.
+E ::= T.
+B ::= C.
+C ::= D.
+D ::= E.
+T ::= X.
+X ::= .

@@ -1,0 +1,5 @@
+%start_symbol S
+S ::= for left ExprOpt semi ExprOpt semi ExprOpt right S.
+S ::= expr.
+ExprOpt ::= expr.
+ExprOpt ::= .

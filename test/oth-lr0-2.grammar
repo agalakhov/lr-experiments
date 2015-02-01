@@ -1,0 +1,7 @@
+%start_symbol S
+S ::= Parens.
+S ::= StarParens.
+Parens ::= left Parens right.
+Parens ::= left right.
+StarParens ::= left StarParens starright.
+StarParens ::= left starright.
