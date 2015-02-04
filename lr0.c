@@ -197,7 +197,7 @@ lr0_goto(struct lr0_machine_builder * builder, struct lr0_state * state, const s
         struct lr0_state * newstate = (struct lr0_state *) scratch[i].go.state;
         qsort(newstate->points, newstate->npoints, sizeof(struct lr0_point), cmp_point);
         scratch[i].go.state = commit_state(builder, newstate);
-        memcpy(&(gototab->go[i]), &(scratch[i].go), sizeof(struct lr0_go));
+        gototab->go[i] = scratch[i].go;
         printo(P_LR0_GOTO, "    [%s] -> %u\n", scratch[i].go.sym->name, scratch[i].go.state->id);
     }
     state->gototab = gototab;
@@ -237,7 +237,7 @@ lr0_build(grammar_t grammar)
     lr0_machine_t mach = calloc(1, sizeof(struct lr0_machine));
     if (! mach)
         abort();
-    memcpy(mach, &builder->machine, sizeof(struct lr0_machine));
+    *mach = builder->machine;
     free(builder);
     return mach;
 }
