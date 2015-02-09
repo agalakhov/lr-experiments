@@ -108,8 +108,7 @@ print_point(const struct lr0_point * pt, const char *prefix)
     print("\n");
 }
 
-
-static unsigned
+unsigned
 lr0_closure(lr0_machine_t mach, struct lr0_point points[], const struct lr0_state * kernel)
 {
     unsigned ir = 0;

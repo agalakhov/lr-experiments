@@ -59,3 +59,5 @@ struct lr_reducetab {
 static inline size_t sizeof_struct_lr_reducetab(unsigned nreduce) {
     return sizeof(struct lr_reducetab) + nreduce * sizeof(struct lr_reduce);
 }
+
+unsigned lr0_closure(lr0_machine_t mach, struct lr0_point points[], const struct lr0_state * kernel);
