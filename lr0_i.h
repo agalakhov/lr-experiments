@@ -26,6 +26,7 @@ struct lr0_state {
     /* Data */
     const struct lr0_gototab *  gototab;
     const struct lr_reducetab * reducetab;
+    unsigned                    nclosure;
     unsigned                    npoints;
     struct lr0_point            points[];
 };

@@ -225,6 +225,7 @@ lr0_build(grammar_t grammar)
         printo(P_LR0_KERNELS, "\nState %u:\n", s->id);
         struct lr0_point points[s->npoints + grammar->n_rules];
         unsigned n = lr0_closure(&builder->machine, points, s);
+        s->nclosure = n;
         if (print_opt(P_LR0_KERNELS)) {
             for (unsigned i = 0; i < n; ++i) {
                 if (! print_opt(P_LR0_CLOSURES) && (i >= s->npoints))
