@@ -13,6 +13,7 @@ OBJS = main.o \
        conflict.o \
        find.o \
        grammar.o \
+       lalr.o \
        lr0.o \
        print.o \
        rc.o \

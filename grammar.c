@@ -5,6 +5,7 @@
 #include "lr0.h"
 #include "grammar_i.h"
 #include "slr.h"
+#include "lalr.h"
 #include "strhash.h"
 #include "bitset.h"
 
@@ -352,6 +353,7 @@ grammar_complete(grammar_t grammar)
 
     lr0_machine_t lr0m = lr0_build(grammar);
     slr_reduce_search(lr0m);
+//    lalr_reduce_search(lr0m);
     conflicts(lr0m);
 //    FILE *fd = fopen("out.C", "w");
 //    codgen_c(fd, lr0m);
