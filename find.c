@@ -72,6 +72,18 @@ find_nullable(grammar_t grammar)
             }
         }
     } while (chg);
+    for (struct symbol * sym = grammar->symlist.first ; sym; sym = sym->next) {
+        if (sym->type == NONTERMINAL) {
+            for (const struct rule *r = sym->nt.rules; r; r = r->next) {
+                unsigned nnl = r->length;
+                for (; nnl; --nnl) {
+                    if (! r->rs[nnl - 1].sym.sym->nullable)
+                        break;
+                }
+                ((struct rule *)r)->nnl = nnl;
+            }
+        }
+    }
 }
 
 void

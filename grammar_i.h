@@ -76,6 +76,7 @@ struct rule {
     const struct symbol *   sym;  /* owner of the rule */
     const char *            ls_label;
     const char *            host_code;
+    unsigned                nnl; /* non-nullable length */
     unsigned                length;
     struct right_side       rs[];
 };
