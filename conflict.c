@@ -23,9 +23,9 @@ conflicts(lr0_machine_t machine)
                         state->id, rsymid ? reducetab->reduce[ireduce].sym->name : "$");
                 ret = true;
             }
-            while (ishift < shifttab->ngo && shifttab->go[ishift].sym->id < symid)
+            while (ishift < shifttab->ngo && shifttab->go[ishift]->access_sym->id < symid)
                 ++ishift;
-            if (ishift < shifttab->ngo && shifttab->go[ishift].sym->id == symid) {
+            if (ishift < shifttab->ngo && shifttab->go[ishift]->access_sym->id == symid) {
                 fprintf(stderr, "Shift-reduce conflict in state %u at symbol %s.\n",
                         state->id, reducetab->reduce[ireduce].sym->name);
                 ret = true;

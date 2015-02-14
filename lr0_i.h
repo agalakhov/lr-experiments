@@ -16,6 +16,7 @@ struct lr0_point {
 
 struct lr0_state {
     unsigned                    id;
+    const struct symbol *       access_sym;
 
     struct lr0_state *          next;
 
@@ -34,17 +35,12 @@ static inline size_t sizeof_struct_lr0_state(unsigned npoints) {
     return sizeof(struct lr0_state) + npoints * sizeof(struct lr0_point);
 }
 
-struct lr0_go {
-    const struct symbol *       sym;
-    const struct lr0_state *    state;
-};
-
 struct lr0_gototab {
     unsigned                    ngo;
-    struct lr0_go               go[];
+    const struct lr0_state *    go[];
 };
 static inline size_t sizeof_struct_lr0_gototab(unsigned ngoto) {
-    return sizeof(struct lr0_gototab) + ngoto * sizeof(struct lr0_go);
+    return sizeof(struct lr0_gototab) + ngoto * sizeof(const struct lr0_state *);
 }
 
 struct lr_reduce {

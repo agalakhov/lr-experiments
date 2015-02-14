@@ -69,18 +69,6 @@ commit_state(struct lr0_machine_builder * builder, struct lr0_state * state)
 }
 
 static signed
-cmp_goto(const void *a, const void *b)
-{
-    const struct lr0_go *ap = (const struct lr0_go *) a;
-    const struct lr0_go *bp = (const struct lr0_go *) b;
-    if (ap->sym->id < bp->sym->id)
-        return -1;
-    if (ap->sym->id > bp->sym->id)
-        return 1;
-    return 0;
-}
-
-static signed
 cmp_point(const void *a, const void *b)
 {
     const struct lr0_point *ap = (const struct lr0_point *) a;
@@ -140,12 +128,26 @@ lr0_closure(lr0_machine_t mach, struct lr0_point points[], const struct lr0_stat
 
 
 union lr0_goto_scratch {
-    struct lr0_go   go;
+    struct lr0_state *          state;
     struct {
         const struct symbol *   sym;
         unsigned                ssize;
     }               tmp;
 };
+
+static signed
+cmp_goto(const void *a, const void *b)
+{
+    const union lr0_goto_scratch *ap = (const union lr0_goto_scratch *) a;
+    const union lr0_goto_scratch *bp = (const union lr0_goto_scratch *) b;
+    if (ap->state->access_sym == bp->state->access_sym)
+        return 0;
+    if (ap->state->access_sym->id < bp->state->access_sym->id)
+        return -1;
+    if (ap->state->access_sym->id > bp->state->access_sym->id)
+        return +1;
+    return 0;
+}
 
 static unsigned
 lr0_goto(struct lr0_machine_builder * builder, struct lr0_state * state, const struct lr0_point closure[], unsigned nclosure)
@@ -169,11 +171,11 @@ lr0_goto(struct lr0_machine_builder * builder, struct lr0_state * state, const s
         ++(symlookup[fs->id - 1]->tmp.ssize);
     }
     for (unsigned i = 0; i < nsym; ++i) {
-        const struct symbol * sym = scratch[i].tmp.sym;
-        scratch[i].go.state = calloc(1, sizeof_struct_lr0_state(scratch[i].tmp.ssize));
-        if (! scratch[i].go.state)
+        struct lr0_state * state = calloc(1, sizeof_struct_lr0_state(scratch[i].tmp.ssize));
+        if (! state)
             abort();
-        scratch[i].go.sym = sym;
+        state->access_sym = scratch[i].tmp.sym;
+        scratch[i].state = state;
     }
     /* Second pass - actually build the kernels */
     for (unsigned i = 0; i < nclosure; ++i) {
@@ -181,7 +183,7 @@ lr0_goto(struct lr0_machine_builder * builder, struct lr0_state * state, const s
         if (r->length <= closure[i].pos) /* nothing to add */
             continue;
         const struct symbol * fs = r->rs[closure[i].pos].sym.sym;
-        struct lr0_state * newstate = (struct lr0_state *) symlookup[fs->id - 1]->go.state;
+        struct lr0_state * newstate = (struct lr0_state *) symlookup[fs->id - 1]->state;
         newstate->points[newstate->npoints].rule = r;
         newstate->points[newstate->npoints].pos = closure[i].pos + 1;
         ++(newstate->npoints);
@@ -193,11 +195,10 @@ lr0_goto(struct lr0_machine_builder * builder, struct lr0_state * state, const s
         abort();
     gototab->ngo = nsym;
     for (unsigned i = 0; i < nsym; ++i) {
-        struct lr0_state * newstate = (struct lr0_state *) scratch[i].go.state;
+        struct lr0_state * newstate = scratch[i].state;
         qsort(newstate->points, newstate->npoints, sizeof(struct lr0_point), cmp_point);
-        scratch[i].go.state = commit_state(builder, newstate);
-        gototab->go[i] = scratch[i].go;
-        printo(P_LR0_GOTO, "    [%s] -> %u\n", scratch[i].go.sym->name, scratch[i].go.state->id);
+        gototab->go[i] = commit_state(builder, newstate);
+        printo(P_LR0_GOTO, "    [%s] -> %u\n", gototab->go[i]->access_sym->name, gototab->go[i]->id);
     }
     state->gototab = gototab;
     return nsym;

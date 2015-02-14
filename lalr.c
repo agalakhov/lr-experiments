@@ -23,9 +23,9 @@ create_dr(lr0_machine_t lr0_machine, const struct lr0_gototab * gototab)
     if (! dr)
         abort();
     for (unsigned i = 0; i < gototab->ngo; ++i) {
-        if (gototab->go[i].sym->type == TERMINAL) {
-            print("  directly-reads %s\n", gototab->go[i].sym->name);
-            set_add(dr, gototab->go[i].sym->id);
+        if (gototab->go[i]->access_sym->type == TERMINAL) {
+            print("  directly-reads %s\n", gototab->go[i]->access_sym->name);
+            set_add(dr, gototab->go[i]->access_sym->id);
         }
     }
     return dr;
@@ -38,13 +38,13 @@ find_transitions(lr0_machine_t lr0_machine, struct trans trans[], unsigned ntran
     for (const struct lr0_state * state = lr0_machine->first_state; state; state = state->next) {
         const struct lr0_gototab * gototab = state->gototab;
         for (unsigned igo = 0; igo < gototab->ngo; ++igo) {
-            if (gototab->go[igo].sym->type == NONTERMINAL) {
+            if (gototab->go[igo]->access_sym->type == NONTERMINAL) {
                 if (trans != NULL) { /* not dry run? */
-                    print("LALR: state %u symbol %s\n", state->id, gototab->go[igo].sym->name);
+                    print("LALR: state %u symbol %s\n", state->id, gototab->go[igo]->access_sym->name);
                     assert(itrans < ntrans);
                     trans[itrans].state = state;
                     trans[itrans].go = igo;
-                    trans[itrans].set = create_dr(lr0_machine, gototab->go[igo].state->gototab);
+                    trans[itrans].set = create_dr(lr0_machine, gototab->go[igo]->gototab);
                 }
                 ++itrans;
             }
