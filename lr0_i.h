@@ -57,3 +57,5 @@ static inline size_t sizeof_struct_lr_reducetab(unsigned nreduce) {
 }
 
 unsigned lr0_closure(lr0_machine_t mach, struct lr0_point points[], const struct lr0_state * kernel);
+
+const struct lr0_state * lr0_goto_find(const struct lr0_gototab * gototab, const struct symbol * sym);
