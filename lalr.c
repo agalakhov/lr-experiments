@@ -11,8 +11,8 @@
 #include <stdlib.h>
 
 struct trans {
-    const struct lr0_state *    state;
-    unsigned                    go;
+    const struct lr0_state *    state1;
+    const struct lr0_state *    state2;
     bitset_t                    set;
 };
 
@@ -42,8 +42,8 @@ find_transitions(lr0_machine_t lr0_machine, struct trans trans[], unsigned ntran
                 if (trans != NULL) { /* not dry run? */
                     print("LALR: state %u symbol %s\n", state->id, gototab->go[igo]->access_sym->name);
                     assert(itrans < ntrans);
-                    trans[itrans].state = state;
-                    trans[itrans].go = igo;
+                    trans[itrans].state1 = state;
+                    trans[itrans].state2 = gototab->go[igo];
                     trans[itrans].set = create_dr(lr0_machine, gototab->go[igo]->gototab);
                 }
                 ++itrans;
@@ -53,23 +53,30 @@ find_transitions(lr0_machine_t lr0_machine, struct trans trans[], unsigned ntran
     return itrans;
 }
 
-#if NEVER
 static void
-find_lookback_includes(lr0_machine_t lr0_machine)
+find_lookback_includes(lr0_machine_t lr0_machine, const struct trans trans[], unsigned ntrans)
 {
-    for (const struct trans * trans ) {
-        const struct symbol const * sym = trans->state2->access_sym;
+    (void) lr0_machine;
+    for (unsigned itr = 0; itr < ntrans; ++itr) {
+        const struct trans * const tr = &trans[itr];
+        const struct symbol * const sym = tr->state2->access_sym;
+        print("LALR: transition from %u via %s\n", tr->state1->id, tr->state2->access_sym->name);
         assert(sym->type == NONTERMINAL);
         for (const struct rule * rule = sym->nt.rules; rule; rule = rule->next) {
-            const struct lr0_state * st = trans->state1;
+            print("  rule: ");
+            const struct lr0_state * st = tr->state1;
             for (unsigned i = 0; i < rule->length; ++i) {
-                st = lr0_goto_find(st->gototab, sym);
+                print(" %s", rule->rs[i].sym.sym->name);
+                st = lr0_goto_find(st->gototab, rule->rs[i].sym.sym);
+                assert(st != NULL);
+                print("(%u)", st->id);
+                // add includes
             }
+            print("\n");
             // add lookback
         }
     }
 }
-#endif
 
 void
 lalr_reduce_search(lr0_machine_t lr0_machine)
@@ -77,6 +84,7 @@ lalr_reduce_search(lr0_machine_t lr0_machine)
     const unsigned ntrans = find_transitions(lr0_machine, NULL, 0);
     struct trans trans[ntrans];
     find_transitions(lr0_machine, trans, ntrans);
+    find_lookback_includes(lr0_machine, trans, ntrans);
 
     for (unsigned i = 0; i < ntrans; ++i)
         set_free(trans[i].set);
