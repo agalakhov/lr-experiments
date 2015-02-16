@@ -80,15 +80,15 @@ find_lookback_includes(lr0_machine_t lr0_machine, const struct trans trans[], un
         print("LALR: transition from %u via %s\n", tr->state1->id, tr->state2->access_sym->name);
         assert(sym->type == NONTERMINAL);
         for (const struct rule * rule = sym->nt.rules; rule; rule = rule->next) {
-            print("  rule: ");
             const struct lr0_state * oldst = NULL;
             const struct lr0_state * st = tr->state1;
+            print("  rule: %s ::= (%u)", sym->name, st->id);
             for (unsigned i = 0; i < rule->length; ++i) {
                 print(" %s", rule->rs[i].sym.sym->name);
                 oldst = st;
                 st = lr0_goto_find(st->gototab, rule->rs[i].sym.sym);
                 assert(st != NULL);
-                print("(%u)", st->id);
+                print(" (%u)", st->id);
                 if ((i + 1 >= rule->nnl) && (rule->rs[i].sym.sym->type == NONTERMINAL)) {
                     struct trans it;
                     it.state1 = oldst;
