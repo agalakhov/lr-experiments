@@ -233,10 +233,19 @@ lr0_build(grammar_t grammar)
     if (! builder)
         abort();
     builder->machine.grammar = grammar;
-    struct lr0_state * state0 = calloc(1, sizeof_struct_lr0_state(1));
+    unsigned s0size = 0;
+    for (const struct rule * r = grammar->start.sym->nt.rules; r; r = r->next)
+        ++s0size;
+    struct lr0_state * state0 = calloc(1, sizeof_struct_lr0_state(s0size));
     if (! state0)
         abort();
-    state0->npoints = 1;
+    for (const struct rule * r = grammar->start.sym->nt.rules; r; r = r->next)
+    state0->npoints = s0size;
+    unsigned irule = 0;
+    for (const struct rule * r = grammar->start.sym->nt.rules; r; r = r->next, ++irule) {
+        state0->points[irule].rule = r;
+        state0->points[irule].pos = 0;
+    }
     state0->points[0].rule = grammar->start.sym->nt.rules; /* first rule */
     state0->points[0].pos = 0;
     builder->nstates = 1;
