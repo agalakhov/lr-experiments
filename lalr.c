@@ -53,6 +53,24 @@ find_transitions(lr0_machine_t lr0_machine, struct trans trans[], unsigned ntran
     return itrans;
 }
 
+#if NEVER
+static void
+find_lookback_includes(lr0_machine_t lr0_machine)
+{
+    for (const struct trans * trans ) {
+        const struct symbol const * sym = trans->state2->access_sym;
+        assert(sym->type == NONTERMINAL);
+        for (const struct rule * rule = sym->nt.rules; rule; rule = rule->next) {
+            const struct lr0_state * st = trans->state1;
+            for (unsigned i = 0; i < rule->length; ++i) {
+                st = goto_find(st->gototab, sym);
+            }
+            // add lookback
+        }
+    }
+}
+#endif
+
 void
 lalr_reduce_search(lr0_machine_t lr0_machine)
 {
