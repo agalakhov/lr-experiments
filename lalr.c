@@ -89,7 +89,7 @@ find_lookback_includes(lr0_machine_t lr0_machine, const struct trans trans[], un
                 st = lr0_goto_find(st->gototab, rule->rs[i].sym.sym);
                 assert(st != NULL);
                 print("(%u)", st->id);
-                if (i + 1 >= rule->nnl) {
+                if ((i + 1 >= rule->nnl) && (rule->rs[i].sym.sym->type == NONTERMINAL)) {
                     struct trans it;
                     it.state1 = oldst;
                     it.state2 = st;
