@@ -291,6 +291,7 @@ static void
 dump_grammar(grammar_t grammar)
 {
     print("-- Grammar:\n");
+    print("%%start_symbol %s\n", grammar->start.sym->name);
     for (struct symbol * sym = grammar->symlist.first; sym; sym = sym->next) {
         switch (sym->type) {
             case UNKNOWN:
