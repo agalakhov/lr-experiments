@@ -81,15 +81,19 @@ find_lookback_includes(lr0_machine_t lr0_machine, const struct trans trans[], un
         assert(sym->type == NONTERMINAL);
         for (const struct rule * rule = sym->nt.rules; rule; rule = rule->next) {
             print("  rule: ");
+            const struct lr0_state * oldst = NULL;
             const struct lr0_state * st = tr->state1;
             for (unsigned i = 0; i < rule->length; ++i) {
                 print(" %s", rule->rs[i].sym.sym->name);
+                oldst = st;
                 st = lr0_goto_find(st->gototab, rule->rs[i].sym.sym);
                 assert(st != NULL);
                 print("(%u)", st->id);
                 if (i + 1 >= rule->nnl) {
-                    // FIXME
-                    add_includes(tr, tr);
+                    struct trans it;
+                    it.state1 = oldst;
+                    it.state2 = st;
+                    add_includes(&it, tr);
                 }
             }
             print("\n");
