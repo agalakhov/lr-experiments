@@ -5,8 +5,9 @@
 
 #include "print.h"
 
-#include <string.h>
+#include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 
 static void
 dump_bitset(grammar_t grammar, const bitset_t set)
@@ -73,10 +74,12 @@ find_nullable(grammar_t grammar)
         sym->nullable = false;
         for (struct rule * rule = (struct rule *) sym->nt.rules; rule; rule = (struct rule *) rule->next) {
             rule->nnl = rule->length;
-            if ((rule->nnl == 0) && ! sym->nullable) {
-                sym->nullable = true;
-                sym->tmp.que_next = null_queue;
-                null_queue = sym;
+            if (rule->nnl == 0) {
+                if (! sym->nullable) {
+                    sym->nullable = true;
+                    sym->tmp.que_next = null_queue;
+                    null_queue = sym;
+                }
             } else if (rule->rs[rule->nnl - 1].sym.sym->type == NONTERMINAL) {
                 unsigned i = rule->rs[rule->nnl - 1].sym.sym->id - grammar->n_terminals - 1;
                 rule->tmp.que_next = relations[i];
@@ -87,18 +90,23 @@ find_nullable(grammar_t grammar)
 
     while (null_queue) {
         const unsigned i = null_queue->id - grammar->n_terminals - 1;
-        for (struct rule * rule = relations[i]; rule; rule = rule->tmp.que_next) {
+        while (relations[i]) {
+            struct rule * rule = relations[i];
+            relations[i] = rule->tmp.que_next;
+            assert(rule->nnl);
             --(rule->nnl);
             while (rule->nnl != 0) {
-                if (! rule->rs[rule->nnl].sym.sym->nullable)
+                if (! rule->rs[rule->nnl - 1].sym.sym->nullable)
                     break;
                 --(rule->nnl);
             }
-            if ((rule->nnl != 0) && ! rule->sym->nullable) {
-                struct symbol * sym = (struct symbol *) rule->sym;
-                sym->nullable = true;
-                sym->tmp.que_next = null_queue;
-                null_queue = sym;
+            if (rule->nnl == 0) {
+                if (! rule->sym->nullable) {
+                    struct symbol * sym = (struct symbol *) rule->sym;
+                    sym->nullable = true;
+                    sym->tmp.que_next = null_queue;
+                    null_queue = sym;
+                }
             } else if (rule->rs[rule->nnl - 1].sym.sym->type == NONTERMINAL) {
                 unsigned j = rule->rs[rule->nnl - 1].sym.sym->id - grammar->n_terminals - 1;
                 rule->tmp.que_next = relations[j];
