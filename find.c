@@ -74,16 +74,16 @@ find_nullable(grammar_t grammar)
         sym->nullable = false;
         for (struct rule * rule = (struct rule *) sym->nt.rules; rule; rule = (struct rule *) rule->next) {
             rule->nnl = rule->length;
-            if (rule->nnl == 0) {
-                if (! sym->nullable) {
+            if (! sym->nullable) {
+                if (rule->nnl == 0) {
                     sym->nullable = true;
                     sym->tmp.que_next = null_queue;
                     null_queue = sym;
+                } else if (rule->rs[rule->nnl - 1].sym.sym->type == NONTERMINAL) {
+                    unsigned i = rule->rs[rule->nnl - 1].sym.sym->id - grammar->n_terminals - 1;
+                    rule->tmp.que_next = relations[i];
+                    relations[i] = rule;
                 }
-            } else if (rule->rs[rule->nnl - 1].sym.sym->type == NONTERMINAL) {
-                unsigned i = rule->rs[rule->nnl - 1].sym.sym->id - grammar->n_terminals - 1;
-                rule->tmp.que_next = relations[i];
-                relations[i] = rule;
             }
         }
     }
@@ -100,17 +100,17 @@ find_nullable(grammar_t grammar)
                     break;
                 --(rule->nnl);
             }
-            if (rule->nnl == 0) {
-                if (! rule->sym->nullable) {
+            if (! rule->sym->nullable) {
+                if (rule->nnl == 0) {
                     struct symbol * sym = (struct symbol *) rule->sym;
                     sym->nullable = true;
                     sym->tmp.que_next = null_queue;
                     null_queue = sym;
+                } else if (rule->rs[rule->nnl - 1].sym.sym->type == NONTERMINAL) {
+                    unsigned j = rule->rs[rule->nnl - 1].sym.sym->id - grammar->n_terminals - 1;
+                    rule->tmp.que_next = relations[j];
+                    relations[j] = rule;
                 }
-            } else if (rule->rs[rule->nnl - 1].sym.sym->type == NONTERMINAL) {
-                unsigned j = rule->rs[rule->nnl - 1].sym.sym->id - grammar->n_terminals - 1;
-                rule->tmp.que_next = relations[j];
-                relations[j] = rule;
             }
         }
         null_queue = null_queue->tmp.que_next;
