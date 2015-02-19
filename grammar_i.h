@@ -76,6 +76,11 @@ struct rule {
     const struct symbol *   sym;  /* owner of the rule */
     const char *            ls_label;
     const char *            host_code;
+
+    union {
+        struct rule *       que_next;
+    }               tmp;
+
     unsigned                nnl; /* non-nullable length */
     unsigned                length;
     struct right_side       rs[];
