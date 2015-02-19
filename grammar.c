@@ -347,6 +347,8 @@ grammar_complete(grammar_t grammar)
     find_first(grammar);
     find_follow(grammar);
 
+    if (print_opt(P_NULLABLE))
+        dump_nullable(grammar);
     if (print_opt(P_FIRST))
         dump_first(grammar);
     if (print_opt(P_FOLLOW))

@@ -16,6 +16,7 @@ struct propt {
 static const struct propt propts[] = {
     { "grammar",        P_GRAMMAR },
     { "symbols",        P_SYMBOLS },
+    { "nullable",       P_NULLABLE },
     { "first",          P_FIRST },
     { "follow",         P_FOLLOW },
     { "lr0-kernels",    P_LR0_KERNELS },

@@ -95,21 +95,18 @@ find_nullable(grammar_t grammar)
 
     while (queue) {
         const unsigned i = queue->id - grammar->n_terminals - 1;
+        assert(queue->nullable);
         queue = queue->tmp.que_next;
         while (relations[i]) {
             struct rule * rule = relations[i];
             relations[i] = rule->tmp.que_next;
             assert(rule->nnl);
-            --(rule->nnl);
-            while (rule->nnl != 0) {
-                if (! rule->rs[rule->nnl - 1].sym.sym->nullable)
-                    break;
+            do {
                 --(rule->nnl);
-            }
+            } while ((rule->nnl != 0) && rule->rs[rule->nnl - 1].sym.sym->nullable);
             enqueue_rule_if_needed(grammar, &queue, relations, rule);
         }
     }
-    dump_nullable(grammar);
 }
 
 void
