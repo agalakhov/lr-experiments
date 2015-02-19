@@ -60,36 +60,42 @@ dump_nullable(grammar_t grammar)
     }
 }
 
+static void
+enqueue_rule_if_needed(const struct grammar * grammar, struct symbol * * queue, struct rule * relations[], struct rule * rule)
+{
+    struct symbol * sym = (struct symbol *) rule->sym;
+    if (sym->nullable)
+        return;
+    if (rule->nnl == 0) {
+        sym->nullable = true;
+        sym->tmp.que_next = *queue;
+        *queue = sym;
+    } else if (rule->rs[rule->nnl - 1].sym.sym->type == NONTERMINAL) {
+        unsigned i = rule->rs[rule->nnl - 1].sym.sym->id - grammar->n_terminals - 1;
+        rule->tmp.que_next = relations[i];
+        relations[i] = rule;
+    }
+}
+
 void
 find_nullable(grammar_t grammar)
 {
-    struct symbol * null_queue = NULL;
+    struct symbol * queue = NULL;
     struct rule * relations[grammar->n_nonterminals];
     memset(relations, 0, sizeof(relations));
     for (struct symbol * sym = grammar->symlist.first; sym; sym = sym->next) {
-        if (sym->type != NONTERMINAL) {
-            sym->nullable = false;
-            continue;
-        }
         sym->nullable = false;
+        if (sym->type != NONTERMINAL)
+            continue;
         for (struct rule * rule = (struct rule *) sym->nt.rules; rule; rule = (struct rule *) rule->next) {
             rule->nnl = rule->length;
-            if (! sym->nullable) {
-                if (rule->nnl == 0) {
-                    sym->nullable = true;
-                    sym->tmp.que_next = null_queue;
-                    null_queue = sym;
-                } else if (rule->rs[rule->nnl - 1].sym.sym->type == NONTERMINAL) {
-                    unsigned i = rule->rs[rule->nnl - 1].sym.sym->id - grammar->n_terminals - 1;
-                    rule->tmp.que_next = relations[i];
-                    relations[i] = rule;
-                }
-            }
+            enqueue_rule_if_needed(grammar, &queue, relations, rule);
         }
     }
 
-    while (null_queue) {
-        const unsigned i = null_queue->id - grammar->n_terminals - 1;
+    while (queue) {
+        const unsigned i = queue->id - grammar->n_terminals - 1;
+        queue = queue->tmp.que_next;
         while (relations[i]) {
             struct rule * rule = relations[i];
             relations[i] = rule->tmp.que_next;
@@ -100,20 +106,8 @@ find_nullable(grammar_t grammar)
                     break;
                 --(rule->nnl);
             }
-            if (! rule->sym->nullable) {
-                if (rule->nnl == 0) {
-                    struct symbol * sym = (struct symbol *) rule->sym;
-                    sym->nullable = true;
-                    sym->tmp.que_next = null_queue;
-                    null_queue = sym;
-                } else if (rule->rs[rule->nnl - 1].sym.sym->type == NONTERMINAL) {
-                    unsigned j = rule->rs[rule->nnl - 1].sym.sym->id - grammar->n_terminals - 1;
-                    rule->tmp.que_next = relations[j];
-                    relations[j] = rule;
-                }
-            }
+            enqueue_rule_if_needed(grammar, &queue, relations, rule);
         }
-        null_queue = null_queue->tmp.que_next;
     }
     dump_nullable(grammar);
 }
