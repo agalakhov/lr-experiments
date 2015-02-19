@@ -72,13 +72,13 @@ find_nullable(grammar_t grammar)
         }
         sym->nullable = false;
         for (struct rule * rule = (struct rule *) sym->nt.rules; rule; rule = (struct rule *) rule->next) {
-            rule->nnl = 0;
-            if ((rule->length == 0) && ! sym->nullable) {
+            rule->nnl = rule->length;
+            if ((rule->nnl == 0) && ! sym->nullable) {
                 sym->nullable = true;
                 sym->tmp.que_next = null_queue;
                 null_queue = sym;
-            } else if (rule->rs[0].sym.sym->type == NONTERMINAL) {
-                unsigned i = rule->rs[0].sym.sym->id - grammar->n_terminals - 1;
+            } else if (rule->rs[rule->nnl - 1].sym.sym->type == NONTERMINAL) {
+                unsigned i = rule->rs[rule->nnl - 1].sym.sym->id - grammar->n_terminals - 1;
                 rule->tmp.que_next = relations[i];
                 relations[i] = rule;
             }
@@ -88,19 +88,19 @@ find_nullable(grammar_t grammar)
     while (null_queue) {
         const unsigned i = null_queue->id - grammar->n_terminals - 1;
         for (struct rule * rule = relations[i]; rule; rule = rule->tmp.que_next) {
-            ++(rule->nnl);
-            while (rule->nnl < rule->length) {
+            --(rule->nnl);
+            while (rule->nnl != 0) {
                 if (! rule->rs[rule->nnl].sym.sym->nullable)
                     break;
-                ++(rule->nnl);
+                --(rule->nnl);
             }
-            if ((rule->nnl >= rule->length) && ! rule->sym->nullable) {
+            if ((rule->nnl != 0) && ! rule->sym->nullable) {
                 struct symbol * sym = (struct symbol *) rule->sym;
                 sym->nullable = true;
                 sym->tmp.que_next = null_queue;
                 null_queue = sym;
-            } else if (rule->rs[rule->nnl].sym.sym->type == NONTERMINAL) {
-                unsigned j = rule->rs[rule->nnl].sym.sym->id - grammar->n_terminals - 1;
+            } else if (rule->rs[rule->nnl - 1].sym.sym->type == NONTERMINAL) {
+                unsigned j = rule->rs[rule->nnl - 1].sym.sym->id - grammar->n_terminals - 1;
                 rule->tmp.que_next = relations[j];
                 relations[j] = rule;
             }
