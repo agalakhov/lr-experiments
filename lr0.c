@@ -138,17 +138,23 @@ union lr0_goto_scratch {
 };
 
 static signed
+cmp_goto_sym(const void *s, const void *t)
+{
+    const struct symbol * sym = (const struct symbol *) s;
+    const struct lr0_state * state = *(const struct lr0_state * const *)t;
+    if (sym->id < state->access_sym->id)
+        return -1;
+    if (sym->id > state->access_sym->id)
+        return +1;
+    return 0;
+}
+
+static signed
 cmp_goto(const void *a, const void *b)
 {
     const union lr0_goto_scratch *ap = (const union lr0_goto_scratch *) a;
     const union lr0_goto_scratch *bp = (const union lr0_goto_scratch *) b;
-    if (ap->state->access_sym == bp->state->access_sym)
-        return 0;
-    if (ap->state->access_sym->id < bp->state->access_sym->id)
-        return -1;
-    if (ap->state->access_sym->id > bp->state->access_sym->id)
-        return +1;
-    return 0;
+    return cmp_goto_sym(ap->state->access_sym, &bp->state);
 }
 
 static unsigned
