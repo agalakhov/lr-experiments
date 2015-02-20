@@ -215,23 +215,8 @@ lr0_goto(struct lr0_machine_builder * builder, struct lr0_state * state, const s
 const struct lr0_state *
 lr0_goto_find(const struct lr0_gototab * gototab, const struct symbol * sym)
 {
-    if (! gototab->ngo)
-        return NULL;
-    unsigned s = 0;
-    unsigned e = gototab->ngo - 1;
-    while (s <= e) {
-        unsigned m = (s + e) >> 1;
-        if (gototab->go[m]->access_sym->id == sym->id)
-            return gototab->go[m];
-        if (gototab->go[m]->access_sym->id < sym->id) {
-            s = m + 1;
-        } else {
-            if (m == 0)
-                return NULL;
-            e = m - 1;
-        }
-    }
-    return NULL;
+    return *(struct lr0_state * const *)
+        bsearch(sym, gototab->go, gototab->ngo, sizeof(gototab->go[0]), cmp_goto_sym);
 }
 
 lr0_machine_t
