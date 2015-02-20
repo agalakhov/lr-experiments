@@ -248,6 +248,18 @@ lr0_build(grammar_t grammar)
     builder->machine.first_state = state0;
     builder->last_state = state0;
 
+    {
+        struct lr0_state * state_end = calloc(1, sizeof_struct_lr0_state(1));
+        if (! state_end)
+            abort();
+        state_end->npoints = 1;
+        state_end->points[0].rule = grammar->start.sym->nt.rules; /* first rule */
+        state_end->points[0].pos = 2;
+        state_end->access_sym = grammar->symlist.first;
+        assert(state_end->access_sym->id == 0);
+        commit_state(builder, state_end);
+    }
+
     for (struct lr0_state * s = state0; s; s = s->next) {
         printo(P_LR0_KERNELS, "\nState %u:\n", s->id);
         struct lr0_point points[s->npoints + grammar->n_rules];
