@@ -315,6 +315,13 @@ count_symbols(grammar_t grammar)
                 ++(grammar->n_nonterminals);
                 break;
         }
+    }
+}
+
+static void
+determine_start(grammar_t grammar)
+{
+    for (struct symbol * sym = grammar->symlist.first; sym; sym = sym->next) {
         if (! sym->use_count) {
             if (! grammar->start.sym && sym->type == NONTERMINAL) {
                 print("note: using `%s' as start symbol\n", sym->name);
@@ -373,6 +380,7 @@ void
 grammar_complete(grammar_t grammar)
 {
     resolve_symbols(grammar);
+    determine_start(grammar);
     add_sentinel_rule(grammar);
     count_symbols(grammar);
     /* At this point we have complete symbol graph */
