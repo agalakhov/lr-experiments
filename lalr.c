@@ -4,23 +4,33 @@
 #include "lr0_i.h"
 
 #include "bitset.h"
+#include "common.h"
 
 #include "print.h"
 
 #include <assert.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
 struct trans {
     const struct lr0_state *    state1;
+    unsigned                    go;
     const struct lr0_state *    state2;
-    const struct includes *     includes;
+
+    struct {
+                                unsigned rank;
+    }                       digraph;
+
+    const struct trans_list *   reads;
+    const struct trans_list *   includes;
+
     bitset_t                    set;
 };
 
-struct includes {
-    const struct includes *     next;
-    const struct trans *        trans;
+struct trans_list {
+    const struct trans_list *   next;
+    struct trans *              trans;
 };
 
 static signed
@@ -72,6 +82,7 @@ find_transitions(lr0_machine_t lr0_machine, struct trans trans[], unsigned ntran
                     print("LALR: state %u symbol %s\n", state->id, gototab->go[igo]->access_sym->name);
                     assert(itrans < ntrans);
                     trans[itrans].state1 = state;
+                    trans[itrans].go = igo;
                     trans[itrans].state2 = gototab->go[igo];
                     trans[itrans].set = create_dr(lr0_machine, gototab->go[igo]->gototab);
                 }
@@ -92,9 +103,9 @@ add_lookback(const struct lr0_state * state, const struct rule * rule, const str
 }
 
 static void
-add_includes(struct trans * trans1, const struct trans * trans2)
+add_includes(struct trans * trans1, struct trans * trans2)
 {
-    struct includes * inc = calloc(1, sizeof(struct includes));
+    struct trans_list* inc = calloc(1, sizeof(struct trans_list));
     if (! inc)
         abort();
     inc->trans = trans2;
@@ -112,7 +123,7 @@ find_lookback_includes(lr0_machine_t lr0_machine, struct trans trans[], unsigned
 {
     (void) lr0_machine;
     for (unsigned itr = 0; itr < ntrans; ++itr) {
-        const struct trans * const tr = &trans[itr];
+        struct trans * const tr = &trans[itr];
         const struct symbol * const sym = tr->state2->access_sym;
         print("LALR: transition from %u via %s\n", tr->state1->id, tr->state2->access_sym->name);
         assert(sym->type == NONTERMINAL);
@@ -138,6 +149,45 @@ find_lookback_includes(lr0_machine_t lr0_machine, struct trans trans[], unsigned
     }
 }
 
+static void
+traverse(struct trans * stack[], unsigned * sp, struct trans * trans, ptrdiff_t list_offset)
+{
+    print("  traverse (%u-%s->%u) %u\n", trans->state1->id, trans->state2->access_sym->name, trans->state2->id, *sp);
+    stack[(*sp)++] = trans;
+    const unsigned d = *sp;
+    trans->digraph.rank = d;
+    print("  / %u\n", d);
+    for (const struct trans_list * it = field_of(trans, struct trans_list *, list_offset); it; it = it->next) {
+        if (it->trans->digraph.rank == 0)
+            traverse(stack, sp, it->trans, list_offset);
+        if (it->trans->digraph.rank < trans->digraph.rank)
+            trans->digraph.rank = it->trans->digraph.rank;
+        set_union(trans->set, it->trans->set);
+    }
+    print("  \\ %u\n", trans->digraph.rank);
+    if (d == trans->digraph.rank) {
+        while (*sp >= d) {
+            stack[--(*sp)]->digraph.rank = UINT_MAX;
+        }
+    }
+}
+
+void
+digraph(struct trans trans[], unsigned ntrans, ptrdiff_t list_offset)
+{
+    print("\033[31;1mstart digraph\033[0m\n");
+    for (unsigned i = 0; i < ntrans; ++i)
+        trans[i].digraph.rank = 0;
+    struct trans * stack[ntrans];
+    unsigned sp = 0;
+    for (unsigned i = 0; i < ntrans; ++i) {
+        if (trans[i].digraph.rank == 0)
+            traverse(stack, &sp, &trans[i], list_offset);
+    }
+    print("\033[31;1mend digraph, %u at stack\033[0m\n", sp);
+    assert(sp == 0);
+}
+
 void
 lalr_reduce_search(lr0_machine_t lr0_machine)
 {
@@ -146,11 +196,13 @@ lalr_reduce_search(lr0_machine_t lr0_machine)
     struct trans trans[ntrans];
     memset(trans, 0, sizeof(trans));
     find_transitions(lr0_machine, trans, ntrans);
+    digraph(trans, ntrans, offsetof(struct trans, reads));
     find_lookback_includes(lr0_machine, trans, ntrans);
+    digraph(trans, ntrans, offsetof(struct trans, includes));
 
     for (unsigned i = 0; i < ntrans; ++i) {
         while (trans[i].includes) {
-            const struct includes * inc = trans[i].includes;
+            const struct trans_list * inc = trans[i].includes;
             trans[i].includes = trans[i].includes->next;
             free((void *)inc);
         }
