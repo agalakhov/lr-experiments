@@ -13,6 +13,7 @@
 
 #include "codgen.h"
 
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -244,6 +245,42 @@ resolve_symbols(grammar_t grammar)
     }
 }
 
+static void
+add_sentinel_rule(grammar_t grammar)
+{
+    struct symbol ** eof = (struct symbol **) strhash_find(grammar->hash, "%eof");
+    assert(! *eof);
+    *eof = calloc(1, sizeof(struct symbol));
+    if (! *eof)
+        abort();
+    (*eof)->type = TERMINAL;
+    (*eof)->name = strhash_key((void **) eof);
+    commit_symbol(grammar, *eof);
+
+    struct symbol ** start = (struct symbol **) strhash_find(grammar->hash, "%start");
+    assert(! *start);
+    *start = calloc(1, sizeof(struct symbol));
+    if (! *start)
+        abort();
+    (*start)->type = NONTERMINAL;
+    (*start)->name = strhash_key((void **) start);
+    commit_symbol(grammar, *start);
+
+    struct rule * rule = calloc(1, sizeof_struct_rule(2));
+    if (! rule)
+        abort();
+    (*start)->nt.rules = rule;
+
+    ++(grammar->n_rules);
+    rule->sym = *start;
+    rule->id = 0;
+    rule->length = 2;
+    rule->rs[0].sym.sym = grammar->start.sym;
+    rule->rs[1].sym.sym = *eof;
+
+    grammar->start.sym = *start;
+}
+
 static const char *
 strtype(const struct symbol * sym)
 {
@@ -335,6 +372,7 @@ void
 grammar_complete(grammar_t grammar)
 {
     resolve_symbols(grammar);
+    add_sentinel_rule(grammar);
     count_symbols(grammar);
     /* At this point we have complete symbol graph */
 
