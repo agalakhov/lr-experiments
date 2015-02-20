@@ -54,9 +54,9 @@ find_transitions(lr0_machine_t lr0_machine, struct trans trans[], unsigned ntran
 }
 
 static void
-add_lookback(const struct lr0_state * state, const struct trans * trans)
+add_lookback(const struct lr0_state * state, const struct rule * rule, const struct trans * trans)
 {
-    print("*   (%u) \033[34;1mlookback\033[0m (%u-%s->%u)\n", state->id,
+    print("*   (%u,rule %s) \033[34;1mlookback\033[0m (%u-%s->%u)\n", state->id, rule->sym->name,
           trans->state1->id, trans->state2->access_sym->name, trans->state2->id);
 }
 
@@ -97,7 +97,7 @@ find_lookback_includes(lr0_machine_t lr0_machine, const struct trans trans[], un
                 }
             }
             print("\n");
-            add_lookback(st, tr);
+            add_lookback(st, rule, tr);
         }
     }
 }
