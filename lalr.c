@@ -9,6 +9,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 
 struct trans {
     const struct lr0_state *    state1;
@@ -53,8 +54,8 @@ create_dr(lr0_machine_t lr0_machine, const struct lr0_gototab * gototab)
     return dr;
 }
 
-static const struct trans *
-lookup_transition(const struct trans trans[], unsigned ntrans, const struct trans * needle)
+static struct trans *
+lookup_transition(struct trans trans[], unsigned ntrans, const struct trans * needle)
 {
     return bsearch(needle, trans, ntrans, sizeof(trans[0]), cmp_trans);
 }
@@ -91,8 +92,14 @@ add_lookback(const struct lr0_state * state, const struct rule * rule, const str
 }
 
 static void
-add_includes(const struct trans * trans1, const struct trans * trans2)
+add_includes(struct trans * trans1, const struct trans * trans2)
 {
+    struct includes * inc = calloc(1, sizeof(struct includes));
+    if (! inc)
+        abort();
+    inc->trans = trans2;
+    inc->next = trans1->includes;
+    trans1->includes = inc;
     print("\033[s\n");
     print("*   (%u-%s->%u) \033[35;1mincludes\033[0m (%u-%s->%u)\n",
           trans1->state1->id, trans1->state2->access_sym->name, trans1->state2->id,
@@ -101,7 +108,7 @@ add_includes(const struct trans * trans1, const struct trans * trans2)
 }
 
 static void
-find_lookback_includes(lr0_machine_t lr0_machine, const struct trans trans[], unsigned ntrans)
+find_lookback_includes(lr0_machine_t lr0_machine, struct trans trans[], unsigned ntrans)
 {
     (void) lr0_machine;
     for (unsigned itr = 0; itr < ntrans; ++itr) {
@@ -121,7 +128,7 @@ find_lookback_includes(lr0_machine_t lr0_machine, const struct trans trans[], un
                 print(" (%u)", st->id);
                 if ((i + 1 >= rule->nnl) && (rule->rs[i].sym.sym->type == NONTERMINAL)) {
                     struct trans it = { .state1 = oldst, .state2 = st };
-                    const struct trans * ltr = lookup_transition(trans, ntrans, &it);
+                    struct trans * ltr = lookup_transition(trans, ntrans, &it);
                     add_includes(ltr, tr);
                 }
             }
@@ -137,9 +144,16 @@ lalr_reduce_search(lr0_machine_t lr0_machine)
     const unsigned ntrans = find_transitions(lr0_machine, NULL, 0);
     print("LALR: total %u transitions.\n", ntrans);
     struct trans trans[ntrans];
+    memset(trans, 0, sizeof(trans));
     find_transitions(lr0_machine, trans, ntrans);
     find_lookback_includes(lr0_machine, trans, ntrans);
 
-    for (unsigned i = 0; i < ntrans; ++i)
+    for (unsigned i = 0; i < ntrans; ++i) {
+        while (trans[i].includes) {
+            const struct includes * inc = trans[i].includes;
+            trans[i].includes = trans[i].includes->next;
+            free((void *)inc);
+        }
         set_free(trans[i].set);
+    }
 }
