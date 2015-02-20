@@ -5,6 +5,7 @@
 
 #include "print.h"
 
+#include <assert.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -234,21 +235,15 @@ lr0_build(grammar_t grammar)
     if (! builder)
         abort();
     builder->machine.grammar = grammar;
-    unsigned s0size = 0;
-    for (const struct rule * r = grammar->start.sym->nt.rules; r; r = r->next)
-        ++s0size;
-    struct lr0_state * state0 = calloc(1, sizeof_struct_lr0_state(s0size));
+
+    struct lr0_state * state0 = calloc(1, sizeof_struct_lr0_state(1));
     if (! state0)
         abort();
-    for (const struct rule * r = grammar->start.sym->nt.rules; r; r = r->next)
-    state0->npoints = s0size;
-    unsigned irule = 0;
-    for (const struct rule * r = grammar->start.sym->nt.rules; r; r = r->next, ++irule) {
-        state0->points[irule].rule = r;
-        state0->points[irule].pos = 0;
-    }
+    state0->npoints = 1;
     state0->points[0].rule = grammar->start.sym->nt.rules; /* first rule */
+    assert(state0->points[0].rule->next == NULL);
     state0->points[0].pos = 0;
+
     builder->nstates = 1;
     builder->machine.first_state = state0;
     builder->last_state = state0;
