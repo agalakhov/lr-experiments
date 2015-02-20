@@ -277,6 +277,8 @@ add_sentinel_rule(grammar_t grammar)
     rule->length = 2;
     rule->rs[0].sym.sym = grammar->start.sym;
     rule->rs[1].sym.sym = *eof;
+    for (unsigned i = 0; i < rule->length; ++i)
+        ++(((struct symbol*)rule->rs[i].sym.sym)->use_count);
 
     grammar->start.sym = *start;
 }
@@ -298,7 +300,7 @@ strtype(const struct symbol * sym)
 static void
 count_symbols(grammar_t grammar)
 {
-    unsigned id = 1;
+    unsigned id = 0;
     for (struct symbol * sym = grammar->symlist.first; sym; sym = sym->next, ++id) {
         sym->id = id;
         switch (sym->type) {
@@ -328,7 +330,6 @@ static void
 dump_grammar(grammar_t grammar)
 {
     print("-- Grammar:\n");
-    print("%%start_symbol %s\n", grammar->start.sym->name);
     for (struct symbol * sym = grammar->symlist.first; sym; sym = sym->next) {
         switch (sym->type) {
             case UNKNOWN:

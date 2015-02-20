@@ -12,8 +12,6 @@
 static void
 dump_bitset(grammar_t grammar, const bitset_t set)
 {
-    if (set_has(set, 0))
-        print(" $");
     for (struct symbol * sym = grammar->symlist.first ; sym; sym = sym->next) {
         if (set_has(set, sym->id))
             print(" %s", sym->name);
@@ -115,7 +113,7 @@ find_first(grammar_t grammar)
     for (struct symbol * sym = grammar->symlist.first ; sym; sym = sym->next) {
         if (sym->first)
             set_free(sym->first);
-        sym->first = set_alloc(grammar->n_terminals + 1);
+        sym->first = set_alloc(grammar->n_terminals);
         if (! sym->first)
             abort();
     }
@@ -153,11 +151,10 @@ find_follow(grammar_t grammar)
     for (struct symbol * sym = grammar->symlist.first ; sym; sym = sym->next) {
         if (sym->follow)
             set_free(sym->follow);
-        sym->follow = set_alloc(grammar->n_terminals + 1);
+        sym->follow = set_alloc(grammar->n_terminals);
         if (! sym->follow)
             abort();
     }
-    set_add(grammar->start.sym->follow, 0);
     bool chg;
     do {
         chg = false;

@@ -101,7 +101,7 @@ lr0_closure(lr0_machine_t mach, struct lr0_point points[], const struct lr0_stat
 {
     unsigned ir = 0;
     unsigned iw = 0;
-    bool seen[mach->grammar->n_terminals + mach->grammar->n_nonterminals];
+    bool seen[mach->grammar->n_nonterminals];
     memset(seen, 0, sizeof(seen));
     /* Copy kernel */
     for (; iw < kernel->npoints; ++iw)
@@ -113,9 +113,10 @@ lr0_closure(lr0_machine_t mach, struct lr0_point points[], const struct lr0_stat
             continue;
         const struct symbol * fs = r->rs[points[ir].pos].sym.sym;
         if (fs->type == NONTERMINAL) {
-            if (seen[fs->id - 1]) /* already there */
+            const unsigned seen_id = fs->id - mach->grammar->n_terminals;
+            if (seen[seen_id]) /* already there */
                 continue;
-            seen[fs->id - 1] = true;
+            seen[seen_id] = true;
             for (const struct rule * nr = fs->nt.rules; nr; nr = nr->next) {
                 points[iw].rule = nr;
                 points[iw].pos = 0;
@@ -164,11 +165,11 @@ lr0_goto(struct lr0_machine_builder * builder, struct lr0_state * state, const s
         if (r->length <= closure[i].pos) /* nothing to add */
             continue;
         const struct symbol * fs = r->rs[closure[i].pos].sym.sym;
-        if (! symlookup[fs->id - 1]) {
-            symlookup[fs->id - 1] = &scratch[nsym++];
-            symlookup[fs->id - 1]->tmp.sym = fs;
+        if (! symlookup[fs->id]) {
+            symlookup[fs->id] = &scratch[nsym++];
+            symlookup[fs->id]->tmp.sym = fs;
         }
-        ++(symlookup[fs->id - 1]->tmp.ssize);
+        ++(symlookup[fs->id]->tmp.ssize);
     }
     for (unsigned i = 0; i < nsym; ++i) {
         struct lr0_state * state = calloc(1, sizeof_struct_lr0_state(scratch[i].tmp.ssize));
@@ -183,7 +184,7 @@ lr0_goto(struct lr0_machine_builder * builder, struct lr0_state * state, const s
         if (r->length <= closure[i].pos) /* nothing to add */
             continue;
         const struct symbol * fs = r->rs[closure[i].pos].sym.sym;
-        struct lr0_state * newstate = (struct lr0_state *) symlookup[fs->id - 1]->state;
+        struct lr0_state * newstate = (struct lr0_state *) symlookup[fs->id]->state;
         newstate->points[newstate->npoints].rule = r;
         newstate->points[newstate->npoints].pos = closure[i].pos + 1;
         ++(newstate->npoints);

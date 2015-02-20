@@ -19,7 +19,7 @@ struct trans {
 static bitset_t
 create_dr(lr0_machine_t lr0_machine, const struct lr0_gototab * gototab)
 {
-    bitset_t dr = set_alloc(lr0_machine->grammar->n_terminals + 1);
+    bitset_t dr = set_alloc(lr0_machine->grammar->n_terminals);
     if (! dr)
         abort();
     for (unsigned i = 0; i < gototab->ngo; ++i) {

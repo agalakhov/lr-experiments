@@ -11,7 +11,7 @@
 static inline void
 add_reduce(struct lr_reduce * rdc, const struct symbol * sym, const struct rule * rule)
 {
-    printo(P_LR_REDUCE, "    [%s] :< %s ~%u\n", (sym ? sym->name : "$"), rule->sym->name, rule->id);
+    printo(P_LR_REDUCE, "    [%s] :< %s ~%u\n", sym->name, rule->sym->name, rule->id);
     rdc->sym = sym;
     rdc->rule = rule;
 }
@@ -33,15 +33,6 @@ slr_reduce_search(lr0_machine_t lr0_machine)
         if (! rtab)
             abort();
         unsigned nrtab = 0;;
-        for (unsigned i = 0; i < state->npoints; ++i) {
-            const struct lr0_point * p = &state->points[i];
-            if (p->pos == p->rule->length) {
-                if (set_has(p->rule->sym->follow, 0)) {
-                    add_reduce(&rtab->reduce[nrtab], NULL, p->rule);
-                    ++nrtab;
-                }
-            }
-        }
         for (const struct symbol * sym = lr0_machine->grammar->symlist.first; sym; sym = sym->next) {
             for (unsigned i = 0; i < state->npoints; ++i) {
                 const struct lr0_point * p = &state->points[i];

@@ -15,12 +15,12 @@ conflicts(lr0_machine_t machine)
         unsigned ishift = 0;
         unsigned symid = (unsigned)(-1);
         for (unsigned ireduce = 0; ireduce < reducetab->nreduce; ++ireduce) {
-            unsigned rsymid = reducetab->reduce[ireduce].sym ? reducetab->reduce[ireduce].sym->id : 0;
+            unsigned rsymid = reducetab->reduce[ireduce].sym->id;
             if (symid != rsymid) {
                 symid = rsymid;
             } else {
                 fprintf(stderr, "Reduce-reduce conflict in state %u at symbol %s.\n",
-                        state->id, rsymid ? reducetab->reduce[ireduce].sym->name : "$");
+                        state->id, reducetab->reduce[ireduce].sym->name);
                 ret = true;
             }
             while (ishift < shifttab->ngo && shifttab->go[ishift]->access_sym->id < symid)
