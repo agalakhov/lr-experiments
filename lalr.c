@@ -15,7 +15,6 @@
 
 struct trans {
     const struct lr0_state *    state1;
-    unsigned                    go;
     const struct lr0_state *    state2;
 
     struct {
@@ -65,9 +64,10 @@ create_dr(lr0_machine_t lr0_machine, const struct lr0_gototab * gototab)
 }
 
 static struct trans *
-lookup_transition(struct trans trans[], unsigned ntrans, const struct trans * needle)
+lookup_transition(struct trans trans[], unsigned ntrans, const struct lr0_state * state1, const struct lr0_state * state2)
 {
-    return bsearch(needle, trans, ntrans, sizeof(trans[0]), cmp_trans);
+    struct trans needle = { .state1 = state1, .state2 = state2 };
+    return bsearch(&needle, trans, ntrans, sizeof(trans[0]), cmp_trans);
 }
 
 static unsigned
@@ -82,7 +82,6 @@ find_transitions(lr0_machine_t lr0_machine, struct trans trans[], unsigned ntran
                     print("LALR: state %u symbol %s\n", state->id, gototab->go[igo]->access_sym->name);
                     assert(itrans < ntrans);
                     trans[itrans].state1 = state;
-                    trans[itrans].go = igo;
                     trans[itrans].state2 = gototab->go[igo];
                     trans[itrans].set = create_dr(lr0_machine, gototab->go[igo]->gototab);
                 }
@@ -93,6 +92,22 @@ find_transitions(lr0_machine_t lr0_machine, struct trans trans[], unsigned ntran
     if (trans)
         qsort(trans, itrans, sizeof(trans[0]), cmp_trans);
     return itrans;
+}
+
+static void
+add_reads(struct trans * trans1, struct trans * trans2)
+{
+    struct trans_list* rd = calloc(1, sizeof(struct trans_list));
+    if (! rd)
+        abort();
+    rd->trans = trans2;
+    rd->next = trans1->reads;
+    trans1->reads = rd;
+    print("\033[s\n");
+    print("*   (%u-%s->%u) \033[33;1mreads\033[0m (%u-%s->%u)\n",
+          trans1->state1->id, trans1->state2->access_sym->name, trans1->state2->id,
+          trans2->state1->id, trans2->state2->access_sym->name, trans2->state2->id);
+    print("\033[u");
 }
 
 static void
@@ -119,6 +134,22 @@ add_includes(struct trans * trans1, struct trans * trans2)
 }
 
 static void
+find_reads(lr0_machine_t lr0_machine, struct trans trans[], unsigned ntrans)
+{
+    (void) lr0_machine;
+    for (unsigned itr = 0; itr < ntrans; ++itr) {
+        struct trans * const tr = &trans[itr];
+        const struct lr0_gototab * gototab = tr->state2->gototab;
+        for (unsigned igo = 0; igo < gototab->ngo; ++igo) {
+            if (gototab->go[igo]->access_sym->nullable) {
+                struct trans * rtr = lookup_transition(trans, ntrans, tr->state2, gototab->go[igo]);
+                add_reads(tr, rtr);
+            }
+        }
+    }
+}
+
+static void
 find_lookback_includes(lr0_machine_t lr0_machine, struct trans trans[], unsigned ntrans)
 {
     (void) lr0_machine;
@@ -138,8 +169,7 @@ find_lookback_includes(lr0_machine_t lr0_machine, struct trans trans[], unsigned
                 assert(st != NULL);
                 print(" (%u)", st->id);
                 if ((i + 1 >= rule->nnl) && (rule->rs[i].sym.sym->type == NONTERMINAL)) {
-                    struct trans it = { .state1 = oldst, .state2 = st };
-                    struct trans * ltr = lookup_transition(trans, ntrans, &it);
+                    struct trans * ltr = lookup_transition(trans, ntrans, oldst, st);
                     add_includes(ltr, tr);
                 }
             }
@@ -196,11 +226,17 @@ lalr_reduce_search(lr0_machine_t lr0_machine)
     struct trans trans[ntrans];
     memset(trans, 0, sizeof(trans));
     find_transitions(lr0_machine, trans, ntrans);
+    find_reads(lr0_machine, trans, ntrans);
     digraph(trans, ntrans, offsetof(struct trans, reads));
     find_lookback_includes(lr0_machine, trans, ntrans);
     digraph(trans, ntrans, offsetof(struct trans, includes));
 
     for (unsigned i = 0; i < ntrans; ++i) {
+        while (trans[i].reads) {
+            const struct trans_list * inc = trans[i].reads;
+            trans[i].reads = trans[i].reads->next;
+            free((void *)inc);
+        }
         while (trans[i].includes) {
             const struct trans_list * inc = trans[i].includes;
             trans[i].includes = trans[i].includes->next;
