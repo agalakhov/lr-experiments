@@ -69,7 +69,7 @@ enqueue_rule_if_needed(const struct grammar * grammar, struct symbol * * queue, 
         sym->tmp.que_next = *queue;
         *queue = sym;
     } else if (rule->rs[rule->nnl - 1].sym.sym->type == NONTERMINAL) {
-        unsigned i = rule->rs[rule->nnl - 1].sym.sym->id - grammar->n_terminals - 1;
+        unsigned i = rule->rs[rule->nnl - 1].sym.sym->id - grammar->n_terminals;
         rule->tmp.que_next = relations[i];
         relations[i] = rule;
     }
@@ -92,7 +92,7 @@ find_nullable(grammar_t grammar)
     }
 
     while (queue) {
-        const unsigned i = queue->id - grammar->n_terminals - 1;
+        const unsigned i = queue->id - grammar->n_terminals;
         assert(queue->nullable);
         queue = queue->tmp.que_next;
         while (relations[i]) {

@@ -363,10 +363,10 @@ dump_grammar(grammar_t grammar)
 static void
 dump_symbols(grammar_t grammar)
 {
-    print("-- Terminals:\n");
+    print("-- Terminals (%u):\n", grammar->n_terminals);
     for (struct symbol * sym = grammar->symlist.first; sym; sym = sym->next) {
-        if (sym->id == grammar->n_terminals + 1) {
-            print("-- Nonterminals:\n");
+        if (sym->id == grammar->n_terminals) {
+            print("-- Nonterminals (%u):\n", grammar->n_nonterminals);
         }
         print("  %s = %u\n", sym->name, sym->id);
     }
