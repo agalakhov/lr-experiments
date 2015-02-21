@@ -13,6 +13,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+struct lalr_lookback {
+    const struct lalr_lookback *    next;
+    const struct rule *             rule;
+    const struct trans *            trans;
+};
+
 struct trans {
     const struct lr0_state *    state1;
     const struct lr0_state *    state2;
@@ -111,8 +117,15 @@ add_reads(struct trans * trans1, struct trans * trans2)
 }
 
 static void
-add_lookback(const struct lr0_state * state, const struct rule * rule, const struct trans * trans)
+add_lookback(struct lr0_state * state, const struct rule * rule, const struct trans * trans)
 {
+    struct lalr_lookback * lb = calloc(1, sizeof(struct lalr_lookback));
+    if (! lb)
+        abort();
+    lb->next = state->tmp.lalr_lookback;
+    lb->rule = rule;
+    lb->trans = trans;
+    state->tmp.lalr_lookback = lb;
     print("*   (%u,rule %s) \033[34;1mlookback\033[0m (%u-%s->%u)\n", state->id, rule->sym->name,
           trans->state1->id, trans->state2->access_sym->name, trans->state2->id);
 }
@@ -174,7 +187,7 @@ find_lookback_includes(lr0_machine_t lr0_machine, struct trans trans[], unsigned
                 }
             }
             print("\n");
-            add_lookback(st, rule, tr);
+            add_lookback((struct lr0_state *)st, rule, tr);
         }
     }
 }
@@ -202,7 +215,7 @@ traverse(struct trans * stack[], unsigned * sp, struct trans * trans, ptrdiff_t 
     }
 }
 
-void
+static void
 digraph(struct trans trans[], unsigned ntrans, ptrdiff_t list_offset)
 {
     print("\033[31;1mstart digraph\033[0m\n");
@@ -218,6 +231,21 @@ digraph(struct trans trans[], unsigned ntrans, ptrdiff_t list_offset)
     assert(sp == 0);
 }
 
+
+static void
+lalr_state(lr0_machine_t lr0_machine, const struct lr0_state * state)
+{
+    struct lr0_point closure[state->nclosure];
+    unsigned n = lr0_closure(lr0_machine, closure, state);
+    assert(n == state->nclosure);
+    for (unsigned i = 0; i < n; ++i) {
+        if (closure[i].pos >= closure[i].rule->length) {
+            const struct rule * rule = closure[i].rule;
+            print("May reduce %s in state %u\n", rule->sym->name, state->id);
+        }
+    }
+}
+
 void
 lalr_reduce_search(lr0_machine_t lr0_machine)
 {
@@ -231,6 +259,9 @@ lalr_reduce_search(lr0_machine_t lr0_machine)
     find_lookback_includes(lr0_machine, trans, ntrans);
     digraph(trans, ntrans, offsetof(struct trans, includes));
 
+    for (const struct lr0_state * state = lr0_machine->first_state; state; state = state->next)
+        lalr_state(lr0_machine, state);
+
     for (unsigned i = 0; i < ntrans; ++i) {
         while (trans[i].reads) {
             const struct trans_list * inc = trans[i].reads;
@@ -243,5 +274,13 @@ lalr_reduce_search(lr0_machine_t lr0_machine)
             free((void *)inc);
         }
         set_free(trans[i].set);
+    }
+
+    for (const struct lr0_state * state = lr0_machine->first_state; state; state = state->next) {
+        while (state->tmp.lalr_lookback) {
+            struct lalr_lookback * lb = (struct lalr_lookback *) state->tmp.lalr_lookback;
+            ((struct lr0_state *)state)->tmp.lalr_lookback = lb->next;
+            free(lb);
+        }
     }
 }
