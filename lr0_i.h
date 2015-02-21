@@ -20,9 +20,10 @@ struct lr0_state {
 
     struct lr0_state *          next;
 
-    struct {
-        const struct lr0_state *    next;
-    }                   hash_search;
+    union {
+        const struct lr0_state *        hash_next;
+        const struct lalr_lookback *    lalr_lookback;
+    }                           tmp;
 
     /* Data */
     const struct lr0_gototab *  gototab;

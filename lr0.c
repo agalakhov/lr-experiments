@@ -53,7 +53,7 @@ commit_state(struct lr0_machine_builder * builder, struct lr0_state * state)
 {
     unsigned hsh = lr0_hash_state(state) % MAX_BUCKETS;
     const struct lr0_state * s = builder->buckets[hsh];
-    for ( ; s && ! lr0_compare_state(s, state); s = s->hash_search.next)
+    for ( ; s && ! lr0_compare_state(s, state); s = s->tmp.hash_next)
         ;
     if (s) {
         free(state);
@@ -61,7 +61,7 @@ commit_state(struct lr0_machine_builder * builder, struct lr0_state * state)
     }
     state->id = builder->nstates;
     state->next = NULL;
-    state->hash_search.next = builder->buckets[hsh];
+    state->tmp.hash_next = builder->buckets[hsh];
     builder->buckets[hsh] = state;
     builder->last_state->next = state;
     builder->last_state = state;
@@ -270,6 +270,8 @@ lr0_build(grammar_t grammar)
         abort();
     *mach = builder->machine;
     free(builder);
+    for (const struct lr0_state * s = mach->first_state; s; s = s->next)
+        ((struct lr0_state*)s)->tmp.hash_next = NULL;
     return mach;
 }
 
