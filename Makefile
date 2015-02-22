@@ -10,6 +10,7 @@ OBJS = main.o \
        array.o \
        bitset.o \
        codgen.o \
+       common.o \
        conflict.o \
        find.o \
        grammar.o \
