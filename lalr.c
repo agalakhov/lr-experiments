@@ -54,6 +54,18 @@ cmp_trans(const void *a, const void *b)
     return 0;
 }
 
+static signed
+cmp_lookback(const void *a, const void *b)
+{
+    const struct lalr_lookback * ap = (const struct lalr_lookback *) a;
+    const struct lalr_lookback * bp = (const struct lalr_lookback *) b;
+    if (ap->rule->id < bp->rule->id)
+        return -1;
+    if (ap->rule->id > bp->rule->id)
+        return +1;
+    return cmp_trans(ap->trans, bp->trans);
+}
+
 static bitset_t
 create_dr(lr0_machine_t lr0_machine, const struct lr0_gototab * gototab)
 {
@@ -235,13 +247,22 @@ digraph(struct trans trans[], unsigned ntrans, ptrdiff_t list_offset)
 static void
 lalr_state(lr0_machine_t lr0_machine, const struct lr0_state * state)
 {
+    print("LALR for state %u:\n", state->id);
+    for (const struct lalr_lookback * lb = state->tmp.lalr_lookback; lb; lb = lb->next) {
+        print("  %i %s :", lb->rule->id, lb->rule->sym->name);
+        for (const struct symbol * sym = lr0_machine->grammar->symlist.first; sym; sym = sym->next) {
+            if (set_has(lb->trans->set, sym->id))
+                print(" %s", sym->name);
+        }
+        print("\n");
+    }
     struct lr0_point closure[state->nclosure];
     unsigned n = lr0_closure(lr0_machine, closure, state);
     assert(n == state->nclosure);
     for (unsigned i = 0; i < n; ++i) {
         if (closure[i].pos >= closure[i].rule->length) {
             const struct rule * rule = closure[i].rule;
-            print("May reduce %s in state %u\n", rule->sym->name, state->id);
+            print("  May reduce %s in state %u\n", rule->sym->name, state->id);
         }
     }
 }
@@ -257,7 +278,10 @@ lalr_reduce_search(lr0_machine_t lr0_machine)
     find_reads(lr0_machine, trans, ntrans);
     digraph(trans, ntrans, offsetof(struct trans, reads));
     find_lookback_includes(lr0_machine, trans, ntrans);
+    for (const struct lr0_state * state = lr0_machine->first_state; state; state = state->next)
+        lsort((void **)&state->tmp.lalr_lookback, offsetof(struct lalr_lookback, next), cmp_lookback);
     digraph(trans, ntrans, offsetof(struct trans, includes));
+
 
     for (const struct lr0_state * state = lr0_machine->first_state; state; state = state->next)
         lalr_state(lr0_machine, state);
