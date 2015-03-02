@@ -207,11 +207,9 @@ find_lookback_includes(lr0_machine_t lr0_machine, struct trans trans[], unsigned
 static void
 traverse(struct trans * stack[], unsigned * sp, struct trans * trans, ptrdiff_t list_offset)
 {
-    print("  traverse (%u-%s->%u) %u\n", trans->state1->id, trans->state2->access_sym->name, trans->state2->id, *sp);
     stack[(*sp)++] = trans;
     const unsigned d = *sp;
     trans->digraph.rank = d;
-    print("  / %u\n", d);
     for (const struct trans_list * it = field_of(trans, struct trans_list *, list_offset); it; it = it->next) {
         if (it->trans->digraph.rank == 0)
             traverse(stack, sp, it->trans, list_offset);
@@ -219,7 +217,6 @@ traverse(struct trans * stack[], unsigned * sp, struct trans * trans, ptrdiff_t 
             trans->digraph.rank = it->trans->digraph.rank;
         set_union(trans->set, it->trans->set);
     }
-    print("  \\ %u\n", trans->digraph.rank);
     if (d == trans->digraph.rank) {
         while (*sp >= d) {
             stack[--(*sp)]->digraph.rank = UINT_MAX;
@@ -230,7 +227,6 @@ traverse(struct trans * stack[], unsigned * sp, struct trans * trans, ptrdiff_t 
 static void
 digraph(struct trans trans[], unsigned ntrans, ptrdiff_t list_offset)
 {
-    print("\033[31;1mstart digraph\033[0m\n");
     for (unsigned i = 0; i < ntrans; ++i)
         trans[i].digraph.rank = 0;
     struct trans * stack[ntrans];
@@ -239,7 +235,6 @@ digraph(struct trans trans[], unsigned ntrans, ptrdiff_t list_offset)
         if (trans[i].digraph.rank == 0)
             traverse(stack, &sp, &trans[i], list_offset);
     }
-    print("\033[31;1mend digraph, %u at stack\033[0m\n", sp);
     assert(sp == 0);
 }
 
@@ -247,22 +242,25 @@ digraph(struct trans trans[], unsigned ntrans, ptrdiff_t list_offset)
 static void
 lalr_state(lr0_machine_t lr0_machine, const struct lr0_state * state)
 {
-    print("LALR for state %u:\n", state->id);
-    for (const struct lalr_lookback * lb = state->tmp.lalr_lookback; lb; lb = lb->next) {
-        print("  %i %s :", lb->rule->id, lb->rule->sym->name);
-        for (const struct symbol * sym = lr0_machine->grammar->symlist.first; sym; sym = sym->next) {
-            if (set_has(lb->trans->set, sym->id))
-                print(" %s", sym->name);
-        }
-        print("\n");
-    }
     struct lr0_point closure[state->nclosure];
     unsigned n = lr0_closure(lr0_machine, closure, state);
     assert(n == state->nclosure);
+    const struct lalr_lookback * lb = state->tmp.lalr_lookback;
     for (unsigned i = 0; i < n; ++i) {
         if (closure[i].pos >= closure[i].rule->length) {
+            bitset_t set = set_alloc(lr0_machine->grammar->n_terminals);
             const struct rule * rule = closure[i].rule;
-            print("  May reduce %s in state %u\n", rule->sym->name, state->id);
+            while (lb && lb->rule->id < rule->id)
+                lb = lb->next;
+            while (lb && lb->rule->id == rule->id) {
+                set_union(set, lb->trans->set);
+                lb = lb->next;
+            }
+            for (const struct symbol * sym = lr0_machine->grammar->symlist.first; sym; sym = sym->next) {
+                if (set_has(set, sym->id))
+                    print("Reduce %s %u at %s\n", rule->sym->name, rule->id, sym->name);
+            }
+            set_free(set);
         }
     }
 }
