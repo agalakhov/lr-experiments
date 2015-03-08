@@ -12,10 +12,10 @@ OBJS = main.o \
        codgen.o \
        common.o \
        conflict.o \
-       find.o \
        grammar.o \
        lalr.o \
        lr0.o \
+       nullable.o \
        print.o \
        rc.o \
        strarr.o \

@@ -1,4 +1,4 @@
-#include "find.h"
+#include "nullable.h"
 
 #include "grammar_i.h"
 #include "bitset.h"
@@ -10,7 +10,7 @@
 #include <string.h>
 
 void
-dump_nullable(grammar_t grammar)
+nullable_dump(grammar_t grammar)
 {
     print("-- Nullable:\n");
     for (const struct symbol * sym = grammar->symlist.first; sym; sym = sym->next) {
@@ -44,7 +44,7 @@ enqueue_rule_if_needed(const struct grammar * grammar, struct symbol * * queue, 
 }
 
 void
-find_nullable(grammar_t grammar)
+nullable_find(grammar_t grammar)
 {
     struct symbol * queue = NULL;
     struct rule * relations[grammar->n_nonterminals];

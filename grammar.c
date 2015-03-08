@@ -1,10 +1,10 @@
 #include "grammar.h"
 
 #include "conflict.h"
-#include "find.h"
 #include "lr0.h"
 #include "grammar_i.h"
 #include "lalr.h"
+#include "nullable.h"
 #include "strhash.h"
 
 #include "print.h"
@@ -384,10 +384,10 @@ grammar_complete(grammar_t grammar)
     if (print_opt(P_SYMBOLS))
         dump_symbols(grammar);
 
-    find_nullable(grammar);
+    nullable_find(grammar);
 
     if (print_opt(P_NULLABLE))
-        dump_nullable(grammar);
+        nullable_dump(grammar);
 
     lr0_machine_t lr0m = lr0_build(grammar);
     lalr_reduce_search(lr0m);
