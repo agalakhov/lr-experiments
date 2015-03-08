@@ -6,8 +6,6 @@ enum print {
     P_GRAMMAR,
     P_SYMBOLS,
     P_NULLABLE,
-    P_FIRST,
-    P_FOLLOW,
     P_LR0_KERNELS,
     P_LR0_CLOSURES,
     P_LR0_GOTO,

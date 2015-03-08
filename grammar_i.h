@@ -49,8 +49,6 @@ struct symbol {
     struct symbol *     next;
 
     bool                nullable;
-    bitset_t            first;      /* FIRST(1) set of terminals */
-    bitset_t            follow;     /* FOLLOW(1) set of terminals */
 
     const char *        host_type;
     unsigned            use_count;

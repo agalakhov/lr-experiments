@@ -18,7 +18,6 @@ OBJS = main.o \
        lr0.o \
        print.o \
        rc.o \
-       slr.o \
        strarr.o \
        strhash.o \
        yy.o bnf.o
