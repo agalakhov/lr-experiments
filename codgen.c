@@ -14,6 +14,7 @@ struct argument {
 struct reduce {
     const char *    name;
     const char *    host_code;
+    unsigned        pop_size;
     unsigned        nargs;
     struct argument args[];
 };
@@ -46,10 +47,11 @@ foreach_rule(lr0_machine_t machine, emit_func_t func, FILE *fd)
             snprintf(name, namelen, "%s_%u", rule->sym->name, rule->id);
             reduce->name = name;
             reduce->host_code = rule->host_code;
+            reduce->pop_size = rule->length;
             reduce->nargs = 0;
             if (rule->ls_label) {
                 struct argument *arg = &reduce->args[reduce->nargs++];
-                arg->stack_index = 0; // FIXME
+                arg->stack_index = 1;
                 arg->host_type = symtype(rule->sym);
                 arg->name = rule->ls_label;
             }
@@ -96,8 +98,8 @@ emit_action_c(FILE *fd, const struct reduce *reduce)
             fprintf(fd, "%s&stack[%i]", (i ? ", " : ""), reduce->args[i].stack_index);
         }
         fprintf(fd, ");\n");
-    } else {
     }
+    fprintf(fd, "    pop(stack, %u);\n", reduce->pop_size);
     fprintf(fd, "}\n\n");
 }
 
