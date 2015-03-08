@@ -391,7 +391,7 @@ grammar_complete(grammar_t grammar)
 
     lr0_machine_t lr0m = lr0_build(grammar);
     lalr_reduce_search(lr0m);
-//    conflicts(lr0m);
+    conflicts(lr0m);
 //    FILE *fd = fopen("out.C", "w");
 //    codgen_c(fd, lr0m);
 //    fclose(fd);

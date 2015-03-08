@@ -242,26 +242,47 @@ digraph(struct trans trans[], unsigned ntrans, ptrdiff_t list_offset)
 static void
 lalr_state(lr0_machine_t lr0_machine, const struct lr0_state * state)
 {
+    printo(P_LR_REDUCE, "State %u:\n", state->id);
     struct lr0_point closure[state->nclosure];
     unsigned n = lr0_closure(lr0_machine, closure, state);
     assert(n == state->nclosure);
+    bitset_t set[state->nclosure];
+    memset(set, 0, sizeof(set));
     const struct lalr_lookback * lb = state->tmp.lalr_lookback;
+    unsigned nreduce = 0;
     for (unsigned i = 0; i < n; ++i) {
         if (closure[i].pos >= closure[i].rule->length) {
-            bitset_t set = set_alloc(lr0_machine->grammar->n_terminals);
+            set[i] = set_alloc(lr0_machine->grammar->n_terminals);
+            if (! set[i])
+                abort();
             const struct rule * rule = closure[i].rule;
             while (lb && lb->rule->id < rule->id)
                 lb = lb->next;
             while (lb && lb->rule->id == rule->id) {
-                set_union(set, lb->trans->set);
+                set_union(set[i], lb->trans->set);
                 lb = lb->next;
             }
-            for (const struct symbol * sym = lr0_machine->grammar->symlist.first; sym; sym = sym->next) {
-                if (set_has(set, sym->id))
-                    print("Reduce %s %u at %s\n", rule->sym->name, rule->id, sym->name);
-            }
-            set_free(set);
+            nreduce += set_size(set[i]);
         }
+    }
+    struct lr_reducetab * rtab = calloc(1, sizeof_struct_lr_reducetab(nreduce));
+    rtab->nreduce = 0;
+    for (const struct symbol * sym = lr0_machine->grammar->symlist.first; sym; sym = sym->next) {
+        for (unsigned i = 0; i < n; ++i) {
+            if (set[i] && set_has(set[i], sym->id)) {
+                assert(rtab->nreduce < nreduce);
+                struct lr_reduce * rdc = &rtab->reduce[rtab->nreduce++];
+                rdc->sym = sym;
+                rdc->rule = closure[i].rule;
+                printo(P_LR_REDUCE, "    [%s] :< %s ~%u\n", sym->name, rdc->rule->sym->name, rdc->rule->id);
+            }
+        }
+    }
+    assert(rtab->nreduce == nreduce);
+    ((struct lr0_state *)state)->reducetab = rtab;
+    for (unsigned i = 0; i < n; ++i) {
+        if (set[i])
+            set_free(set[i]);
     }
 }
 
