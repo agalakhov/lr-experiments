@@ -85,18 +85,6 @@ cmp_point(const void *a, const void *b)
     return 0;
 }
 
-static void
-print_point(const struct lr0_point * pt, const char *prefix)
-{
-    print("%s%s ::=", prefix, pt->rule->sym->name);
-    for (unsigned i = 0; i < pt->pos; ++i)
-        print(" %s", pt->rule->rs[i].sym.sym->name);
-    print(" _");
-    for (unsigned i = pt->pos; i < pt->rule->length; ++i)
-        print(" %s", pt->rule->rs[i].sym.sym->name);
-    print("\n");
-}
-
 unsigned
 lr0_closure(lr0_machine_t mach, struct lr0_point points[], const struct lr0_state * kernel)
 {
@@ -206,7 +194,6 @@ lr0_goto(struct lr0_machine_builder * builder, struct lr0_state * state, const s
         struct lr0_state * newstate = scratch[i].state;
         qsort(newstate->points, newstate->npoints, sizeof(struct lr0_point), cmp_point);
         gototab->go[i] = commit_state(builder, newstate);
-        printo(P_LR0_GOTO, "    [%s] -> %u\n", gototab->go[i]->access_sym->name, gototab->go[i]->id);
     }
     state->gototab = gototab;
     return nsym;
@@ -252,17 +239,9 @@ lr0_build(grammar_t grammar)
     }
 
     for (struct lr0_state * s = state0; s; s = s->next) {
-        printo(P_LR0_KERNELS, "\nState %u:\n", s->id);
         struct lr0_point points[s->npoints + grammar->n_rules];
         unsigned n = lr0_closure(&builder->machine, points, s);
         s->nclosure = n;
-        if (print_opt(P_LR0_KERNELS)) {
-            for (unsigned i = 0; i < n; ++i) {
-                if (! print_opt(P_LR0_CLOSURES) && (i >= s->npoints))
-                    break;
-                print_point(&points[i], "  ");
-            }
-        }
         lr0_goto(builder, s, points, n);
     }
     lr0_machine_t mach = calloc(1, sizeof(struct lr0_machine));
@@ -288,4 +267,47 @@ lr0_free(lr0_machine_t mach)
         free((void *)f);
     }
     free(mach);
+}
+
+
+static void
+print_point(const struct lr0_point * pt, const char *prefix)
+{
+    print("%s%s ::=", prefix, pt->rule->sym->name);
+    for (unsigned i = 0; i < pt->pos; ++i)
+        print(" %s", pt->rule->rs[i].sym.sym->name);
+    print(" _");
+    for (unsigned i = pt->pos; i < pt->rule->length; ++i)
+        print(" %s", pt->rule->rs[i].sym.sym->name);
+    print("\n");
+}
+
+void
+lr0_print(lr0_machine_t mach)
+{
+    for (const struct lr0_state * s = mach->first_state; s; s = s->next) {
+        printo(P_LR0_KERNELS, "\nState %u:\n", s->id); // FIXME
+        if (print_opt(P_LR0_KERNELS)) {
+            struct lr0_point points[s->nclosure];
+            unsigned n = lr0_closure(mach, points, s);
+            assert(n == s->nclosure);
+            for (unsigned i = 0; i < n; ++i) {
+                if (! print_opt(P_LR0_CLOSURES) && (i >= s->npoints))
+                    break;
+                print_point(&points[i], "  ");
+            }
+        }
+        if (print_opt(P_LR0_GOTO) && s->gototab) {
+            for (unsigned i = 0; i < s->gototab->ngo; ++i) {
+                const struct lr0_state *go = s->gototab->go[i];
+                print("    [%s] -> %u\n", go->access_sym->name, go->id);
+            }
+        }
+        if (print_opt(P_LR_REDUCE) && s->reducetab) {
+            for (unsigned i = 0; i < s->reducetab->nreduce; ++i) {
+                const struct lr_reduce *rdc = &s->reducetab->reduce[i];
+                print("    [%s] :< %s ~%u\n", rdc->sym->name, rdc->rule->sym->name, rdc->rule->id);
+            }
+        }
+    }
 }

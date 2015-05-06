@@ -242,7 +242,6 @@ digraph(struct trans trans[], unsigned ntrans, ptrdiff_t list_offset)
 static void
 lalr_state(lr0_machine_t lr0_machine, const struct lr0_state * state)
 {
-    printo(P_LR_REDUCE, "State %u:\n", state->id);
     struct lr0_point closure[state->nclosure];
     unsigned n = lr0_closure(lr0_machine, closure, state);
     assert(n == state->nclosure);
@@ -274,7 +273,6 @@ lalr_state(lr0_machine_t lr0_machine, const struct lr0_state * state)
                 struct lr_reduce * rdc = &rtab->reduce[rtab->nreduce++];
                 rdc->sym = sym;
                 rdc->rule = closure[i].rule;
-                printo(P_LR_REDUCE, "    [%s] :< %s ~%u\n", sym->name, rdc->rule->sym->name, rdc->rule->id);
             }
         }
     }
