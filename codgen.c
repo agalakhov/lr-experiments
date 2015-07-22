@@ -12,6 +12,7 @@ struct argument {
 };
 
 struct reduce {
+    unsigned        id;
     const char *    name;
     const char *    host_code;
     unsigned        pop_size;
@@ -45,6 +46,7 @@ foreach_rule(lr0_machine_t machine, emit_func_t func, FILE *fd)
             size_t namelen = 1 + snprintf(NULL, 0, "%s_%u", rule->sym->name, rule->id);
             char name[namelen];
             snprintf(name, namelen, "%s_%u", rule->sym->name, rule->id);
+            reduce->id = rule->id;
             reduce->name = name;
             reduce->host_code = rule->host_code;
             reduce->pop_size = rule->length;
@@ -92,16 +94,18 @@ emit_reduce_c(FILE *fd, const struct reduce *reduce)
 static void
 emit_action_c(FILE *fd, const struct reduce *reduce)
 {
-    fprintf(fd, "static void __action_%s (struct stack *stack) {\n", reduce->name);
+    if (reduce->id == 0)
+        return;
+    fprintf(fd, "    case %u:\n", reduce->id);
     if (reduce->host_code) {
-        fprintf(fd, "    __reduce_%s(", reduce->name);
+        fprintf(fd, "        __reduce_%s(", reduce->name);
         for (unsigned i = 0; i < reduce->nargs; ++i) {
-            fprintf(fd, "%s&stack[%i]", (i ? ", " : ""), reduce->args[i].stack_index);
+            fprintf(fd, "%s&stack->data[%i]", (i ? ", " : ""), reduce->args[i].stack_index);
         }
         fprintf(fd, ");\n");
     }
-    fprintf(fd, "    pop(stack, %u);\n", reduce->pop_size);
-    fprintf(fd, "}\n\n");
+    fprintf(fd, "        __pop(stack, %u);\n", reduce->pop_size);
+    fprintf(fd, "        break;\n");
 }
 
 void
@@ -109,5 +113,9 @@ codgen_c(FILE *fd, lr0_machine_t machine)
 {
     fprintf(fd, "/* GENERATED FILE - DO NOT EDIT */\n\n");
     foreach_rule(machine, emit_reduce_c, fd);
+    fprintf(fd, "static void __action (struct __stack *stack, unsigned id) {\n");
+    fprintf(fd, "    switch (id) {\n");
     foreach_rule(machine, emit_action_c, fd);
+    fprintf(fd, "    }\n");
+    fprintf(fd, "}\n\n");
 }
