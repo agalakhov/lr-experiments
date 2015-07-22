@@ -78,8 +78,9 @@ emit_reduce_c(FILE *fd, const struct reduce *reduce)
     }
     fprintf(fd, "static inline void __reduce_%s (", reduce->name);
     for (unsigned i = 0; i < reduce->nargs; ++i) {
-        fprintf(fd, "\n  %s %s*__%s", reduce->args[i].host_type,
-                (i ? "const " : ""), reduce->args[i].name);
+        fprintf(fd, "\n  %s %s*__%s%s", reduce->args[i].host_type,
+                (i ? "const " : ""), reduce->args[i].name,
+                (i + 1 < reduce->nargs ? "," : ""));
     }
     fprintf(fd, "%s) {%s}\n", (reduce->nargs ? "\n" : ""), reduce->host_code);
     for (unsigned i = 0; i < reduce->nargs; ++i) {
