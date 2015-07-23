@@ -53,14 +53,14 @@ foreach_rule(lr0_machine_t machine, emit_func_t func, FILE *fd)
             reduce->nargs = 0;
             if (rule->ls_label) {
                 struct argument *arg = &reduce->args[reduce->nargs++];
-                arg->stack_index = 1;
+                arg->stack_index = 0;
                 arg->host_type = symtype(rule->sym);
                 arg->name = rule->ls_label;
             }
             for (unsigned i = 0; i < rule->length; ++i) {
                 if (rule->rs[i].label) {
                     struct argument *arg = &reduce->args[reduce->nargs++];
-                    arg->stack_index = i - rule->length;
+                    arg->stack_index = i - rule->length - 1;
                     arg->host_type = symtype(rule->rs[i].sym.sym);
                     arg->name= rule->rs[i].label;
                 }
@@ -96,7 +96,8 @@ emit_action_c(FILE *fd, const struct reduce *reduce)
 {
     if (reduce->id == 0)
         return;
-    fprintf(fd, "    case %u:\n", reduce->id);
+    fprintf(fd, "    case %u: /* %s */\n", reduce->id, reduce->name);
+    fprintf(fd, "        __assert_stack(stack, %u);\n", reduce->pop_size);
     if (reduce->host_code) {
         fprintf(fd, "        __reduce_%s(", reduce->name);
         for (unsigned i = 0; i < reduce->nargs; ++i) {
