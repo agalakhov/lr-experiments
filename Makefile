@@ -32,12 +32,15 @@ endif
 
 all: main.exe
 clean:
-	-rm -f $(OBJS) $(DEPS) yy.c bnf.c bnf.h
+	-rm -f $(OBJS) $(DEPS) yy.c bnf.c bnf.h genblob.exe
 
 yy.o : yy.c bnf.c
 
 main.exe : $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $^
+
+genblob.exe : genblob.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -O2 -o $@ $<
 
 %.d : %.c
 	$(CC) -M -MP -MQ $@ -MQ $(<:%.c=%.o) -o $@ $<
