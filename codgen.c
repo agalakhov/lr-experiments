@@ -3,7 +3,11 @@
 #include "grammar_i.h"
 #include "lr0_i.h"
 
+#include <errno.h>
+#include <stdlib.h>
 #include <string.h>
+
+#include "blob_c.h"
 
 struct argument {
     signed          stack_index;
@@ -101,7 +105,7 @@ emit_action_c(FILE *fd, const struct reduce *reduce)
     if (reduce->host_code) {
         fprintf(fd, "        __reduce_%s(", reduce->name);
         for (unsigned i = 0; i < reduce->nargs; ++i) {
-            fprintf(fd, "%s&stack->data[%i]", (i ? ", " : ""), reduce->args[i].stack_index);
+            fprintf(fd, "%s&stack->sp[%i]", (i ? ", " : ""), reduce->args[i].stack_index);
         }
         fprintf(fd, ");\n");
     }
@@ -109,14 +113,39 @@ emit_action_c(FILE *fd, const struct reduce *reduce)
     fprintf(fd, "        break;\n");
 }
 
+
 void
 codgen_c(FILE *fd, lr0_machine_t machine)
 {
+    FILE *tmpl = fmemopen((void*)blob_c, sizeof(blob_c), "rb");
+    if (! tmpl)
+        abort();
+
     fprintf(fd, "/* GENERATED FILE - DO NOT EDIT */\n\n");
-    foreach_rule(machine, emit_reduce_c, fd);
-    fprintf(fd, "static void __action (struct __stack *stack, unsigned id) {\n");
-    fprintf(fd, "    switch (id) {\n");
-    foreach_rule(machine, emit_action_c, fd);
-    fprintf(fd, "    }\n");
-    fprintf(fd, "}\n\n");
+
+    bool noeol = false;
+
+    while (true) {
+        char line[1024];
+        errno = 0;
+        if (! fgets(line, sizeof(line), tmpl)) {
+            if (errno)
+                abort();
+            break;
+        }
+
+        if (noeol || line[0] != '%' || line[1] != '%') {
+            fputs(line, fd);
+            noeol = (line[strlen(line) - 1] != '\n');
+        } else if (! strcmp(line, "%%functions\n")) {
+            foreach_rule(machine, emit_reduce_c, fd);
+        } else if (! strcmp(line, "%%action\n")) {
+            foreach_rule(machine, emit_action_c, fd);
+        } else {
+            fprintf(fd, "//");
+            fputs(line, fd);
+        }
+    }
+
+    fclose(tmpl);
 }

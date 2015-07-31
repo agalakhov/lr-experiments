@@ -20,7 +20,10 @@ OBJS = main.o \
        rc.o \
        strarr.o \
        strhash.o \
+       blob_c.o \
        yy.o bnf.o
+
+GENERATED = yy.c bnf.c bnf.h blob_c.c blob_c.h
 
 NOWARN = yy.o bnf.o
 $(NOWARN): WFLAGS =
@@ -32,7 +35,7 @@ endif
 
 all: main.exe
 clean:
-	-rm -f $(OBJS) $(DEPS) yy.c bnf.c bnf.h genblob.exe
+	-rm -f $(OBJS) $(DEPS) $(GENERATED) genblob.exe
 
 yy.o : yy.c bnf.c
 
@@ -53,3 +56,7 @@ genblob.exe : genblob.c
 
 %.c %.h : %.ly %.lt
 	lemon -q $<
+
+blob_%.c blob_%.h : template_%.c genblob.exe
+	./genblob.exe -s blob_$* -i blob_$*.h -o blob_$*.c $<
+
