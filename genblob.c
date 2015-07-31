@@ -103,7 +103,7 @@ main(int argc, char **argv)
             ename = source;
             for (unsigned i = 0; i < rd; ++i) {
                 const char *brk = ((size + i) % 8) ? "" : "\n   ";
-                if (fprintf(src, "%s 0x%02x,", brk, buf[i]) < 0)
+                if (fprintf(src, "%s 0x%02x,", brk, (unsigned char)buf[i]) < 0)
                     goto error;
             }
             size += rd;
