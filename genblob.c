@@ -114,7 +114,7 @@ main(int argc, char **argv)
         if (fprintf(src, "\n};\n") < 0)
             goto error;
         ename = header;
-        if (fprintf(hdr, "extern const char %s[%u];\n", symbol, size) < 0)
+        if (fprintf(hdr, "/* GENERATED FILE - DO NOT EDIT */\nextern const char %s[%u];\n", symbol, size) < 0)
             goto error;
 
         ret = 0;
