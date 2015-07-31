@@ -13,6 +13,7 @@ struct argument {
     signed          stack_index;
     const char *    host_type;
     const char *    name;
+    const char *    type;
 };
 
 struct reduce {
@@ -60,6 +61,7 @@ foreach_rule(lr0_machine_t machine, emit_func_t func, FILE *fd)
                 arg->stack_index = 0;
                 arg->host_type = symtype(rule->sym);
                 arg->name = rule->ls_label;
+                arg->type = sym->name;
             }
             for (unsigned i = 0; i < rule->length; ++i) {
                 if (rule->rs[i].label) {
@@ -67,6 +69,7 @@ foreach_rule(lr0_machine_t machine, emit_func_t func, FILE *fd)
                     arg->stack_index = i - rule->length - 1;
                     arg->host_type = symtype(rule->rs[i].sym.sym);
                     arg->name= rule->rs[i].label;
+                    arg->type = rule->rs[i].sym.sym->name;
                 }
             }
             func(fd, reduce);
@@ -105,7 +108,7 @@ emit_action_c(FILE *fd, const struct reduce *reduce)
     if (reduce->host_code) {
         fprintf(fd, "        __reduce_%s(", reduce->name);
         for (unsigned i = 0; i < reduce->nargs; ++i) {
-            fprintf(fd, "%s&stack->sp[%i]", (i ? ", " : ""), reduce->args[i].stack_index);
+            fprintf(fd, "%s&stack->sp[%i].%s", (i ? ", " : ""), reduce->args[i].stack_index, reduce->args[i].type);
         }
         fprintf(fd, ");\n");
     }
@@ -113,6 +116,16 @@ emit_action_c(FILE *fd, const struct reduce *reduce)
     fprintf(fd, "        break;\n");
 }
 
+static void
+emit_types_c(FILE *fd, lr0_machine_t machine)
+{
+    const struct grammar *grammar = machine->grammar;
+    for (const struct symbol *sym = grammar->symlist.first; sym; sym = sym->next) {
+        if (sym->type != NONTERMINAL)
+            continue;
+        fprintf(fd, "    %s %s;\n", symtype(sym), sym->name);
+    }
+}
 
 void
 codgen_c(FILE *fd, lr0_machine_t machine)
@@ -137,6 +150,8 @@ codgen_c(FILE *fd, lr0_machine_t machine)
         if (noeol || line[0] != '%' || line[1] != '%') {
             fputs(line, fd);
             noeol = (line[strlen(line) - 1] != '\n');
+        } else if (! strcmp(line, "%%types\n")) {
+            emit_types_c(fd, machine);
         } else if (! strcmp(line, "%%functions\n")) {
             foreach_rule(machine, emit_reduce_c, fd);
         } else if (! strcmp(line, "%%action\n")) {

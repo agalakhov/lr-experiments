@@ -50,7 +50,7 @@ term(Y) ::= fac(A).
 
 fac(Y) ::= NUMBER(N).
 {
-	Y = atof(N).
+	Y = atof(N);
 }
 
 fac(Y) ::= LPAREN expr(X) RPAREN.

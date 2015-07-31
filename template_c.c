@@ -4,9 +4,13 @@
 
 #include <stdlib.h>
 
+union __record {
+%%types
+};
+
 struct __stack {
-    union record *sp;
-    union record *base;
+    union __record *sp;
+    union __record *base;
     unsigned size;
 };
 
@@ -24,7 +28,7 @@ __assert_stack(const struct __stack *stack, unsigned count)
 static inline void
 __pop(struct __stack *stack, unsigned count)
 {
-    stack->sp[-count] = stack->sp;
+    stack->sp[-count] = stack->sp[0];
     stack->sp -= count;
     stack->sp += 1;
 }

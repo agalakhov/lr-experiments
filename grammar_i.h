@@ -30,7 +30,8 @@ struct grammar {
 enum symbol_type {
     UNKNOWN = 0,
     TERMINAL,
-    NONTERMINAL
+    NONTERMINAL,
+    START_NONTERMINAL,
 };
 
 struct terminal {

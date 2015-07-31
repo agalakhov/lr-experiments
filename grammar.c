@@ -76,6 +76,7 @@ destroy_symbol(void *ptr)
             destroy_terminal(&sym->t);
             break;
         case NONTERMINAL:
+        case START_NONTERMINAL:
             destroy_nonterminal(&sym->nt);
             break;
     }
@@ -101,6 +102,7 @@ commit_symbol(grammar_t grammar, struct symbol *sym)
             grammar->symlist.first = sym;
             break;
         case NONTERMINAL:
+        case START_NONTERMINAL:
             sym->next = grammar->symlist.last->next;
             grammar->symlist.last->next = sym;
             grammar->symlist.last = sym;
@@ -256,7 +258,7 @@ add_sentinel_rule(grammar_t grammar)
     *start = calloc(1, sizeof(struct symbol));
     if (! *start)
         abort();
-    (*start)->type = NONTERMINAL;
+    (*start)->type = START_NONTERMINAL;
     (*start)->name = strhash_key((void **) start);
     commit_symbol(grammar, *start);
 
@@ -286,6 +288,7 @@ strtype(const struct symbol * sym)
         case TERMINAL:
             return "terminal";
         case NONTERMINAL:
+        case START_NONTERMINAL:
             return "nonterminal";
     }
     return "BUG";
@@ -306,6 +309,7 @@ count_symbols(grammar_t grammar)
                 ++(grammar->n_terminals);
                 break;
             case NONTERMINAL:
+            case START_NONTERMINAL:
                 ++(grammar->n_nonterminals);
                 break;
         }
@@ -339,6 +343,7 @@ dump_grammar(grammar_t grammar)
                 print("%%terminal %s.\n", sym->name);
                 break;
             case NONTERMINAL:
+            case START_NONTERMINAL:
                 for (const struct rule * r = sym->nt.rules; r; r = r->next) {
                     print("// %i\n%s ::=", r->id, sym->name);
                     for (unsigned i = 0; i < r->length; ++i)
