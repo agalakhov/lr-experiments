@@ -31,6 +31,12 @@ static inline size_t sizeof_struct_reduce(unsigned nargs) {
 typedef void (*emit_func_t)(FILE *fd, const struct reduce *reduce);
 
 static const char*
+termtype(const struct grammar *grammar)
+{
+    return grammar->terminal_host_type ? grammar->terminal_host_type : "char";
+}
+
+static const char*
 symtype(const struct symbol *sym)
 {
     return sym->host_type ? sym->host_type : "void *";
@@ -69,7 +75,7 @@ foreach_rule(lr0_machine_t machine, emit_func_t func, FILE *fd)
                     arg->stack_index = i - rule->length - 1;
                     arg->host_type = symtype(rule->rs[i].sym.sym);
                     arg->name= rule->rs[i].label;
-                    arg->type = rule->rs[i].sym.sym->name;
+                    arg->type = (rule->rs[i].sym.sym->type == TERMINAL) ? "__terminal" : rule->rs[i].sym.sym->name;
                 }
             }
             func(fd, reduce);
@@ -125,6 +131,7 @@ emit_types_c(FILE *fd, lr0_machine_t machine)
             continue;
         fprintf(fd, "    %s %s;\n", symtype(sym), sym->name);
     }
+    fprintf(fd, "    %s __terminal;\n", termtype(grammar));
 }
 
 void

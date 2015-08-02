@@ -56,10 +56,14 @@ rule ::= PRAGMA_START_SYMBOL WORD(S).
     rcunref((void*)S);
 }
 
-
+rule ::= PRAGMA_TOKEN_TYPE LCURL text(T) RCURL.
+{
+    grammar_assign_terminal_type(grammar, T);
+    rcunref((void*)T);
+}
 
 %fallback PRAGMA
-    PRAGMA_NAME PRAGMA_INCLUDE PRAGMA_TOKEN_TYPE PRAGMA_TOKEN_DESTRUCTOR
+    PRAGMA_NAME PRAGMA_INCLUDE PRAGMA_TOKEN_DESTRUCTOR
     PRAGMA_EXTRA_ARGUMENT PRAGMA_SYNTAX_ERROR
 .
 rule ::= PRAGMA.

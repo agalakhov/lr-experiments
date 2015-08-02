@@ -116,8 +116,23 @@ commit_symbol(grammar_t grammar, struct symbol *sym)
 void
 grammar_free(grammar_t grammar)
 {
+    if (grammar->terminal_host_type)
+        free((void *)grammar->terminal_host_type);
     strhash_free(grammar->hash, destroy_symbol);
     free(grammar);
+}
+
+/* 
+ * Assign host type to terminals.
+ */
+void 
+grammar_assign_terminal_type(grammar_t grammar, const char *type)
+{
+    if (grammar->terminal_host_type) {
+        print("error: reassigning terminal type\n");
+        return;
+    }
+    grammar->terminal_host_type = strdup(type);
 }
 
 /*
@@ -135,7 +150,7 @@ grammar_assign_type(grammar_t grammar, const char *name, const char *type)
         (*s)->name = strhash_key((void **)s);
     }
     if ((*s)->host_type) {
-        print("error: reassiginig symbol type\n");
+        print("error: reassiginig symbol type for %s\n", name);
         return;
     }
     (*s)->host_type = strdup(type);

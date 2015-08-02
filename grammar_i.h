@@ -25,6 +25,8 @@ struct grammar {
     unsigned        n_rules;
 
     union rsptr     start;
+
+    const char *    terminal_host_type;
 };
 
 enum symbol_type {

@@ -12,6 +12,8 @@ void grammar_free(grammar_t grammar);
 
 void grammar_start_symbol(grammar_t grammar, const char *start);
 
+void grammar_assign_terminal_type(grammar_t grammar, const char *type);
+
 void grammar_assign_type(grammar_t grammar, const char *name, const char *type);
 
 void grammar_nonterminal(grammar_t grammar,
