@@ -4,13 +4,16 @@
 
 #include <stdlib.h>
 
-union __record {
+struct __record {
+    unsigned state;
+    union {
 %%types
+    } item;
 };
 
 struct __stack {
-    union __record *sp;
-    union __record *base;
+    struct __record *sp;
+    struct __record *base;
     unsigned size;
 };
 
@@ -26,16 +29,17 @@ __assert_stack(const struct __stack *stack, unsigned count)
 }
 
 static inline void
-__pop(struct __stack *stack, unsigned count)
+__pop(struct __stack *stack, unsigned count, unsigned symbol)
 {
     stack->sp[-count] = stack->sp[0];
     stack->sp -= count;
+    // TODO stack->sp[0].state = goto[ stack->sp[-1].state, symbol ]
     stack->sp += 1;
 }
 
 static void
-__action (struct __stack *stack, unsigned id) {
+__reduce (struct __stack *stack, unsigned id) {
     switch (id) {
-%%action
+%%reduce
     }
 }

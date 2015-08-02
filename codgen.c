@@ -18,6 +18,7 @@ struct argument {
 
 struct reduce {
     unsigned        id;
+    unsigned        symbol;
     const char *    name;
     const char *    host_code;
     unsigned        pop_size;
@@ -58,6 +59,7 @@ foreach_rule(lr0_machine_t machine, emit_func_t func, FILE *fd)
             char name[namelen];
             snprintf(name, namelen, "%s_%u", rule->sym->name, rule->id);
             reduce->id = rule->id;
+            reduce->symbol = sym->id;
             reduce->name = name;
             reduce->host_code = rule->host_code;
             reduce->pop_size = rule->length;
@@ -84,7 +86,7 @@ foreach_rule(lr0_machine_t machine, emit_func_t func, FILE *fd)
 }
 
 static void
-emit_reduce_c(FILE *fd, const struct reduce *reduce)
+emit_functions_c(FILE *fd, const struct reduce *reduce)
 {
     if (! reduce->host_code)
         return;
@@ -105,7 +107,7 @@ emit_reduce_c(FILE *fd, const struct reduce *reduce)
 }
 
 static void
-emit_action_c(FILE *fd, const struct reduce *reduce)
+emit_reduce_c(FILE *fd, const struct reduce *reduce)
 {
     if (reduce->id == 0)
         return;
@@ -114,11 +116,11 @@ emit_action_c(FILE *fd, const struct reduce *reduce)
     if (reduce->host_code) {
         fprintf(fd, "        __reduce_%s(", reduce->name);
         for (unsigned i = 0; i < reduce->nargs; ++i) {
-            fprintf(fd, "%s&stack->sp[%i].%s", (i ? ", " : ""), reduce->args[i].stack_index, reduce->args[i].type);
+            fprintf(fd, "%s&stack->sp[%i].item.%s", (i ? ", " : ""), reduce->args[i].stack_index, reduce->args[i].type);
         }
         fprintf(fd, ");\n");
     }
-    fprintf(fd, "        __pop(stack, %u);\n", reduce->pop_size);
+    fprintf(fd, "        __pop(stack, %u, %u);\n", reduce->pop_size, reduce->symbol);
     fprintf(fd, "        break;\n");
 }
 
@@ -160,9 +162,9 @@ codgen_c(FILE *fd, lr0_machine_t machine)
         } else if (! strcmp(line, "%%types\n")) {
             emit_types_c(fd, machine);
         } else if (! strcmp(line, "%%functions\n")) {
+            foreach_rule(machine, emit_functions_c, fd);
+        } else if (! strcmp(line, "%%reduce\n")) {
             foreach_rule(machine, emit_reduce_c, fd);
-        } else if (! strcmp(line, "%%action\n")) {
-            foreach_rule(machine, emit_action_c, fd);
         } else {
             fprintf(fd, "//");
             fputs(line, fd);
