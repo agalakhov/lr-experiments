@@ -33,7 +33,7 @@ typedef void (*emit_func_t)(FILE *fd, const struct reduce *reduce);
 static const char*
 termtype(const struct grammar *grammar)
 {
-    return grammar->terminal_host_type ? grammar->terminal_host_type : "char";
+    return grammar->terminal_host_type ? grammar->terminal_host_type : "int";
 }
 
 static const char*
