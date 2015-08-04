@@ -118,8 +118,28 @@ grammar_free(grammar_t grammar)
 {
     if (grammar->terminal_host_type)
         free((void *)grammar->terminal_host_type);
+    if (grammar->host_code)
+        free((void *)grammar->host_code);
     strhash_free(grammar->hash, destroy_symbol);
     free(grammar);
+}
+
+/*
+ * Add raw host code to the grammar
+ */
+void
+grammar_add_host_code(grammar_t grammar, const char *host_code)
+{
+    size_t len = strlen(host_code);
+    if (grammar->host_code)
+        len += strlen(grammar->host_code);
+    char *str = calloc(1, len + 1);
+    if (grammar->host_code)
+        strcpy(str, grammar->host_code);
+    strcat(str, host_code);
+    if (grammar->host_code)
+        free((void *)grammar->host_code);
+    grammar->host_code = str;
 }
 
 /* 

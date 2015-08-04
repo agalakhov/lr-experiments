@@ -208,6 +208,9 @@ codgen_c(FILE *fd, lr0_machine_t machine)
         if (noeol || line[0] != '%' || line[1] != '%') {
             fputs(line, fd);
             noeol = (line[strlen(line) - 1] != '\n');
+        } else if (! strcmp(line, "%%include\n")) {
+            if (machine->grammar->host_code)
+                fputs(machine->grammar->host_code, fd);
         } else if (! strcmp(line, "%%types\n")) {
             emit_types_c(fd, machine);
         } else if (! strcmp(line, "%%functions\n")) {

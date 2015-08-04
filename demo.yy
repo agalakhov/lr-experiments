@@ -1,3 +1,8 @@
+%include {
+# include <stdio.h>
+# include <stdlib.h>
+}
+
 %token_type { double }
 %type program { double }
 %type expr { double }

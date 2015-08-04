@@ -33,8 +33,6 @@ rules ::= rules rule.
 
 
 
-rule ::= PRAGMA_INCLUDE LCURL text RCURL.
-
 rule ::= PRAGMA_NAME LCURL text RCURL.
 
 rule ::= PRAGMA_TYPE WORD(N) LCURL text(T) RCURL.
@@ -62,8 +60,14 @@ rule ::= PRAGMA_TOKEN_TYPE LCURL text(T) RCURL.
     rcunref((void*)T);
 }
 
+rule ::= PRAGMA_INCLUDE LCURL text(T) RCURL.
+{
+    grammar_add_host_code(grammar, T);
+    rcunref((void*)T);
+}
+
 %fallback PRAGMA
-    PRAGMA_NAME PRAGMA_INCLUDE PRAGMA_TOKEN_DESTRUCTOR
+    PRAGMA_NAME PRAGMA_TOKEN_DESTRUCTOR
     PRAGMA_EXTRA_ARGUMENT PRAGMA_SYNTAX_ERROR
 .
 rule ::= PRAGMA.

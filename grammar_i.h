@@ -27,6 +27,7 @@ struct grammar {
     union rsptr     start;
 
     const char *    terminal_host_type;
+    const char *    host_code;
 };
 
 enum symbol_type {
