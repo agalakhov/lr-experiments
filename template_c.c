@@ -2,6 +2,8 @@
 
 %%functions
 
+%%defines
+
 #include <stdlib.h>
 
 static inline unsigned
@@ -23,14 +25,17 @@ struct __record {
     } item;
 };
 
-struct __stack {
-    struct __record *sp;
-    struct __record *base;
-    unsigned size;
+struct __EXPORT(parser) {
+    unsigned            state;
+    struct {
+        struct __record *   sp;
+        struct __record *   base;
+        unsigned size;
+    }                   stack;
 };
 
 static inline void
-__assert_stack(const struct __stack *stack, unsigned count)
+__assert_stack(const struct __EXPORT(parser) *parser, unsigned count)
 {
     if (stack->sp - stack->base < count) {
         abort(); /* BUG */
@@ -41,7 +46,7 @@ __assert_stack(const struct __stack *stack, unsigned count)
 }
 
 static inline void
-__pop(struct __stack *stack, unsigned count, unsigned symbol)
+__pop(struct __EXPORT(parser) *parser, unsigned count, unsigned symbol)
 {
     stack->sp[-count] = stack->sp[0];
     stack->sp -= count;
@@ -50,16 +55,16 @@ __pop(struct __stack *stack, unsigned count, unsigned symbol)
 }
 
 static inline void
-__shift(struct stack *stack, unsigned symbol, terminal_t terminal, unsigned state)
+__shift(struct __EXPORT(parser) *parser, unsigned token, __EXPORT(terminal_t) terminal)
 {
     __assert_stack(stack, 0);
-    stack->sp[0].state = state;
+    stack->sp[0].state = __goto(stack->sp[-1].state, token);
     stack->sp[0].item.__terminal = terminal;
     stack->sp += 1;
 }
 
 static inline void
-__reduce(struct __stack *stack, unsigned id)
+__reduce(struct __EXPORT(parser) *parser, unsigned id)
 {
     switch (id) {
 %%reduce
@@ -67,9 +72,15 @@ __reduce(struct __stack *stack, unsigned id)
 }
 
 bool
-parse(struct __stack *stack, unsigned token, terminal_t terminal)
+__EXPORT(parse)(struct __EXPORT(parser) *parser, unsigned token, __EXPORT(terminal_t) terminal)
 {
-    unsigned go = __goto(stack->sp[-1].state, token);
-
+    while (true) {
+        unsigned act = __action(stack->sp[-1].state, token);
+        if (! act)
+            break;
+        __reduce(stack, act);
+    }
+    __shift(stack, token, terminal);
+    return (state == 1);
 }
 
