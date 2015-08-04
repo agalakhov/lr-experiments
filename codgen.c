@@ -146,7 +146,8 @@ emit_defines_c(FILE *fd, lr0_machine_t machine)
 static void
 emit_actions_c(FILE *fd, lr0_machine_t machine)
 {
-    fprintf(fd, "static const unsigned __actions[][] = {\n");
+    fprintf(fd, "static const unsigned __actions[][%u] = {\n",
+            machine->grammar->n_terminals + machine->grammar->n_nonterminals);
     for (const struct lr0_state * s = machine->first_state; s; s = s->next) {
         fprintf(fd, "    {");
         unsigned id = 0;
@@ -167,7 +168,8 @@ emit_actions_c(FILE *fd, lr0_machine_t machine)
 static void
 emit_gotos_c(FILE *fd, lr0_machine_t machine)
 {
-    fprintf(fd, "static const unsigned __gotos[][] = {\n");
+    fprintf(fd, "static const unsigned __gotos[][%u] = {\n",
+            machine->grammar->n_terminals + machine->grammar->n_nonterminals);
     for (const struct lr0_state * s = machine->first_state; s; s = s->next) {
         fprintf(fd, "    {");
         unsigned id = 0;
