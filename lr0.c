@@ -282,14 +282,9 @@ print_point(const struct lr0_point * pt, const char *prefix)
     print("\n");
 }
 
-static int
-table[1000][1000];
-
 void
 lr0_print(lr0_machine_t mach)
 {
-    memset(table, 0, sizeof(table));
-    unsigned nx = 0;
     for (const struct lr0_state * s = mach->first_state; s; s = s->next) {
         printo(P_LR0_KERNELS, "\nState %u:\n", s->id); // FIXME
         if (print_opt(P_LR0_KERNELS)) {
@@ -302,31 +297,17 @@ lr0_print(lr0_machine_t mach)
                 print_point(&points[i], "  ");
             }
         }
-        ++nx;
         if (print_opt(P_LR0_GOTO) && s->gototab) {
             for (unsigned i = 0; i < s->gototab->ngo; ++i) {
                 const struct lr0_state *go = s->gototab->go[i];
                 print("    [%s] -> %u\n", go->access_sym->name, go->id);
-                table[s->id][go->access_sym->id] = go->id;
             }
         }
         if (print_opt(P_LR_REDUCE) && s->reducetab) {
             for (unsigned i = 0; i < s->reducetab->nreduce; ++i) {
                 const struct lr_reduce *rdc = &s->reducetab->reduce[i];
                 print("    [%s] :< %s ~%u\n", rdc->sym->name, rdc->rule->sym->name, rdc->rule->id);
-                table[s->id][rdc->sym->id] = - rdc->rule->id;
             }
         }
     }
-    print("\n\n     ");
-    for (unsigned y = 0; y < mach->grammar->n_terminals + mach->grammar->n_nonterminals; ++y)
-        print("  \033[1;37m%3u\033[0m", y);
-    print("\n\n");
-    for (unsigned x = 0; x < nx; ++x) {
-        print("\033[1;37m%-3u\033[0m  ", x);
-        for (unsigned y = 0; y < mach->grammar->n_terminals + mach->grammar->n_nonterminals; ++y)
-            print("  \033[1;%sm%3i\033[0m", (table[x][y] ? (table[x][y] > 0 ? "32" : "31") : "30"), table[x][y]);
-        print("\n");
-    }
-    print("\n");
 }
