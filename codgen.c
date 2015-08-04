@@ -74,7 +74,7 @@ foreach_rule(lr0_machine_t machine, emit_func_t func, FILE *fd)
             for (unsigned i = 0; i < rule->length; ++i) {
                 if (rule->rs[i].label) {
                     struct argument *arg = &reduce->args[reduce->nargs++];
-                    arg->stack_index = i - rule->length - 1;
+                    arg->stack_index = (signed)i - (signed)rule->length;
                     arg->host_type = (rule->rs[i].sym.sym->type == TERMINAL) ? termtype(grammar) : symtype(rule->rs[i].sym.sym);
                     arg->name= rule->rs[i].label;
                     arg->type = (rule->rs[i].sym.sym->type == TERMINAL) ? "__terminal" : rule->rs[i].sym.sym->name;

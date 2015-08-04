@@ -3,7 +3,7 @@
 # include <stdlib.h>
 }
 
-%token_type { const char ** }
+%token_type { const char * }
 %type program { double }
 %type expr { double }
 %type term { double }
@@ -11,7 +11,7 @@
 
 program ::= expr(E).
 {
-	if (1) { printf("%lf\n", E); }
+	if (1) { printf("\033[1;33m%lf\033[0m\n", E); }
 }
 
 expr(Y) ::= expr(X) PLUS term(A).
@@ -56,7 +56,7 @@ term(Y) ::= fac(A).
 
 fac(Y) ::= NUMBER(N).
 {
-	Y = strtod(*N, (char**)N);
+	Y = strtod(N, NULL);
 }
 
 fac(Y) ::= LPAREN expr(X) RPAREN.
