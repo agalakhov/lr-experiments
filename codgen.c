@@ -136,6 +136,55 @@ emit_types_c(FILE *fd, lr0_machine_t machine)
     fprintf(fd, "    %s __terminal;\n", termtype(grammar));
 }
 
+static void
+emit_defines_c(FILE *fd, lr0_machine_t machine)
+{
+    (void) machine;
+    fprintf(fd, "#define __EXPORT(x) x\n");
+}
+
+static void
+emit_actions_c(FILE *fd, lr0_machine_t machine)
+{
+    fprintf(fd, "static const unsigned __actions[][] = {\n");
+    for (const struct lr0_state * s = machine->first_state; s; s = s->next) {
+        fprintf(fd, "    {");
+        unsigned id = 0;
+        for (unsigned i = 0; i < s->reducetab->nreduce; ++i) {
+            const struct lr_reduce *rdc = &s->reducetab->reduce[i];
+            for (; id < rdc->sym->id; ++id)
+                fprintf(fd, " 0,");
+            fprintf(fd, " %u,", rdc->rule->id);
+            ++id;
+        }
+        for (; id < machine->grammar->n_terminals + machine->grammar->n_nonterminals; ++id)
+            fprintf(fd, " 0,");
+        fprintf(fd, " },\n");
+    }
+    fprintf(fd, "}\n");
+}
+
+static void
+emit_gotos_c(FILE *fd, lr0_machine_t machine)
+{
+    fprintf(fd, "static const unsigned __gotos[][] = {\n");
+    for (const struct lr0_state * s = machine->first_state; s; s = s->next) {
+        fprintf(fd, "    {");
+        unsigned id = 0;
+        for (unsigned i = 0; i < s->gototab->ngo; ++i) {
+            const struct lr0_state *go = s->gototab->go[i];
+            for (; id < go->access_sym->id; ++id)
+                fprintf(fd, " 0,");
+            fprintf(fd, " %u,", go->id);
+            ++id;
+        }
+        for (; id < machine->grammar->n_terminals + machine->grammar->n_nonterminals; ++id)
+            fprintf(fd, " 0,");
+        fprintf(fd, " },\n");
+    }
+    fprintf(fd, "}\n");
+}
+
 void
 codgen_c(FILE *fd, lr0_machine_t machine)
 {
@@ -165,6 +214,12 @@ codgen_c(FILE *fd, lr0_machine_t machine)
             foreach_rule(machine, emit_functions_c, fd);
         } else if (! strcmp(line, "%%reduce\n")) {
             foreach_rule(machine, emit_reduce_c, fd);
+        } else if (! strcmp(line, "%%actions\n")) {
+            emit_actions_c(fd, machine);
+        } else if (! strcmp(line, "%%gotos\n")) {
+            emit_gotos_c(fd, machine);
+        } else if (! strcmp(line, "%%defines\n")) {
+            emit_defines_c(fd, machine);
         } else {
             fprintf(fd, "//");
             fputs(line, fd);

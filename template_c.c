@@ -6,11 +6,15 @@
 
 #include <stdlib.h>
 
+%%actions
+
 static inline unsigned
 __action(unsigned state, unsigned token)
 {
     return __actions[state][token];
 }
+
+%%gotos
 
 static inline unsigned
 __goto(unsigned state, unsigned token)
