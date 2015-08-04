@@ -75,7 +75,7 @@ foreach_rule(lr0_machine_t machine, emit_func_t func, FILE *fd)
                 if (rule->rs[i].label) {
                     struct argument *arg = &reduce->args[reduce->nargs++];
                     arg->stack_index = i - rule->length - 1;
-                    arg->host_type = symtype(rule->rs[i].sym.sym);
+                    arg->host_type = (rule->rs[i].sym.sym->type == TERMINAL) ? termtype(grammar) : symtype(rule->rs[i].sym.sym);
                     arg->name= rule->rs[i].label;
                     arg->type = (rule->rs[i].sym.sym->type == TERMINAL) ? "__terminal" : rule->rs[i].sym.sym->name;
                 }
@@ -140,7 +140,7 @@ static void
 emit_defines_c(FILE *fd, lr0_machine_t machine)
 {
     fprintf(fd, "#define __EXPORT(x) x\n");
-    fprintf(fd, "typedef %s terminal_t;\n", termtype(machine->grammar));
+    fprintf(fd, "typedef %s __EXPORT(terminal_t);\n", termtype(machine->grammar));
 }
 
 static void

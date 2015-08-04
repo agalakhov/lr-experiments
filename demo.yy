@@ -3,7 +3,7 @@
 # include <stdlib.h>
 }
 
-%token_type { double }
+%token_type { const char ** }
 %type program { double }
 %type expr { double }
 %type term { double }
@@ -56,7 +56,7 @@ term(Y) ::= fac(A).
 
 fac(Y) ::= NUMBER(N).
 {
-	Y = atof(N);
+	Y = strtod(*N, (char**)N);
 }
 
 fac(Y) ::= LPAREN expr(X) RPAREN.
