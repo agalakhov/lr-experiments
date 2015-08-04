@@ -1,2 +1,2 @@
 /* GENERATED FILE - DO NOT EDIT */
-extern const char blob_c[1921];
+extern const char blob_c[2362];

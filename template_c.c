@@ -31,7 +31,6 @@ struct __record {
 };
 
 struct __EXPORT(parser) {
-    unsigned            state;
     struct {
         struct __record *   sp;
         unsigned size;
@@ -76,8 +75,28 @@ __reduce(struct __EXPORT(parser) *parser, unsigned id)
     }
 }
 
+struct __EXPORT(parser) *
+__EXPORT(parser_alloc)(void)
+{
+    struct __EXPORT(parser) *parser = calloc(1, sizeof(struct __EXPORT(parser)) + (16 << 10)); // FIXME
+    if (! parser)
+        return NULL;
+    parser->stack.sp = parser->stack.base;
+    parser->stack.size = 1024; // FIXME
+    parser->stack.sp->state = 0;
+    ++parser->stack.sp;
+    return parser;
+}
+
+void
+__EXPORT(parser_free)(struct __EXPORT(parser) *parser)
+{
+    if (parser)
+        free(parser);
+}
+
 bool
-__EXPORT(parse)(struct __EXPORT(parser) *parser, unsigned token, __EXPORT(terminal_t) terminal)
+__EXPORT(parser_parse)(struct __EXPORT(parser) *parser, unsigned token, __EXPORT(terminal_t) terminal)
 {
     while (true) {
         unsigned act = __action(parser->stack.sp[-1].state, token);
