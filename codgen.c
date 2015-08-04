@@ -112,15 +112,15 @@ emit_reduce_c(FILE *fd, const struct reduce *reduce)
     if (reduce->id == 0)
         return;
     fprintf(fd, "    case %u: /* %s */\n", reduce->id, reduce->name);
-    fprintf(fd, "        __assert_stack(stack, %u);\n", reduce->pop_size);
+    fprintf(fd, "        __assert_stack(parser, %u);\n", reduce->pop_size);
     if (reduce->host_code) {
         fprintf(fd, "        __reduce_%s(", reduce->name);
         for (unsigned i = 0; i < reduce->nargs; ++i) {
-            fprintf(fd, "%s&stack->sp[%i].item.%s", (i ? ", " : ""), reduce->args[i].stack_index, reduce->args[i].type);
+            fprintf(fd, "%s&parser->stack.sp[%i].item.%s", (i ? ", " : ""), reduce->args[i].stack_index, reduce->args[i].type);
         }
         fprintf(fd, ");\n");
     }
-    fprintf(fd, "        __pop(stack, %u, %u);\n", reduce->pop_size, reduce->symbol);
+    fprintf(fd, "        __pop(parser, %u, %u);\n", reduce->pop_size, reduce->symbol);
     fprintf(fd, "        break;\n");
 }
 
@@ -139,8 +139,8 @@ emit_types_c(FILE *fd, lr0_machine_t machine)
 static void
 emit_defines_c(FILE *fd, lr0_machine_t machine)
 {
-    (void) machine;
     fprintf(fd, "#define __EXPORT(x) x\n");
+    fprintf(fd, "typedef %s terminal_t;\n", termtype(machine->grammar));
 }
 
 static void
@@ -161,7 +161,7 @@ emit_actions_c(FILE *fd, lr0_machine_t machine)
             fprintf(fd, " 0,");
         fprintf(fd, " },\n");
     }
-    fprintf(fd, "}\n");
+    fprintf(fd, "};\n");
 }
 
 static void
@@ -182,7 +182,7 @@ emit_gotos_c(FILE *fd, lr0_machine_t machine)
             fprintf(fd, " 0,");
         fprintf(fd, " },\n");
     }
-    fprintf(fd, "}\n");
+    fprintf(fd, "};\n");
 }
 
 void

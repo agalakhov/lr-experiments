@@ -1,3 +1,4 @@
+%token_type { double }
 %type program { double }
 %type expr { double }
 %type term { double }

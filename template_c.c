@@ -2,9 +2,10 @@
 
 %%functions
 
-%%defines
-
+#include <stdbool.h>
 #include <stdlib.h>
+
+%%defines
 
 %%actions
 
@@ -33,18 +34,18 @@ struct __EXPORT(parser) {
     unsigned            state;
     struct {
         struct __record *   sp;
-        struct __record *   base;
         unsigned size;
+        struct __record     base[];
     }                   stack;
 };
 
 static inline void
 __assert_stack(const struct __EXPORT(parser) *parser, unsigned count)
 {
-    if (stack->sp - stack->base < count) {
+    if (parser->stack.sp - parser->stack.base < count) {
         abort(); /* BUG */
     }
-    if (stack->sp - stack->base + 1 < stack->size + count) {
+    if (parser->stack.sp - parser->stack.base + 1 < parser->stack.size + count) {
         // TODO reallocate stack
     }
 }
@@ -52,19 +53,19 @@ __assert_stack(const struct __EXPORT(parser) *parser, unsigned count)
 static inline void
 __pop(struct __EXPORT(parser) *parser, unsigned count, unsigned symbol)
 {
-    stack->sp[-count] = stack->sp[0];
-    stack->sp -= count;
-    stack->sp[0].state = __goto(stack->sp[-1].state, symbol);
-    stack->sp += 1;
+    parser->stack.sp[-count] = parser->stack.sp[0];
+    parser->stack.sp -= count;
+    parser->stack.sp[0].state = __goto(parser->stack.sp[-1].state, symbol);
+    parser->stack.sp += 1;
 }
 
 static inline void
 __shift(struct __EXPORT(parser) *parser, unsigned token, __EXPORT(terminal_t) terminal)
 {
-    __assert_stack(stack, 0);
-    stack->sp[0].state = __goto(stack->sp[-1].state, token);
-    stack->sp[0].item.__terminal = terminal;
-    stack->sp += 1;
+    __assert_stack(parser, 0);
+    parser->stack.sp[0].state = __goto(parser->stack.sp[-1].state, token);
+    parser->stack.sp[0].item.__terminal = terminal;
+    parser->stack.sp += 1;
 }
 
 static inline void
@@ -79,12 +80,12 @@ bool
 __EXPORT(parse)(struct __EXPORT(parser) *parser, unsigned token, __EXPORT(terminal_t) terminal)
 {
     while (true) {
-        unsigned act = __action(stack->sp[-1].state, token);
+        unsigned act = __action(parser->stack.sp[-1].state, token);
         if (! act)
             break;
-        __reduce(stack, act);
+        __reduce(parser, act);
     }
-    __shift(stack, token, terminal);
-    return (state == 1);
+    __shift(parser, token, terminal);
+    return (parser->stack.sp[-1].state == 1);
 }
 
