@@ -11,7 +11,7 @@ usage(const char *name)
 "Generate *.c and *.h constant array file from an arbitrary text file.\n"
 "\n"
 "Options:\n"
-"  -i FILE.h  header file to generate\n"
+"  -H FILE.h  header file to generate\n"
 "  -o FILE.c  source file to generate\n"
 "  -s SYMBOL  C symbol name\n"
             "", name);
@@ -28,14 +28,14 @@ main(int argc, char **argv)
 
     {
         int opt;
-        while ((opt = getopt(argc, argv, "s:i:o:h")) != -1) {
+        while ((opt = getopt(argc, argv, "s:H:o:h")) != -1) {
             switch (opt) {
                 case 's':
                     if (symbol)
                         return usage(argv[0]);
                     symbol = optarg;
                     break;
-                case 'i':
+                case 'H':
                     if (header)
                         return usage(argv[0]);
                     header = optarg;
@@ -60,7 +60,7 @@ main(int argc, char **argv)
     if (! symbol)
         symbol = "blob";
 
-    if (! symbol || ! header || ! source)
+    if (! symbol || ! (header || source))
         return usage(argv[0]);
 
     int ret = 1;
@@ -76,18 +76,24 @@ main(int argc, char **argv)
         if (! in)
             goto error;
 
-        hdr = fopen((ename = header), "w");
-        if (! hdr)
-            goto error;
+        if (header) {
+            hdr = fopen((ename = header), "w");
+            if (! hdr)
+                goto error;
+        }
 
-        src = fopen((ename = source), "w");
-        if (! src)
-            goto error;
+        if (source) {
+            src = fopen((ename = source), "w");
+            if (! src)
+                goto error;
+        }
 
-        eop = "write";
-        ename = source;
-        if (fprintf(src, "/* GENERATED FILE - DO NOT EDIT */\nconst char %s[] = {", symbol) < 0)
-            goto error;
+        if (src) {
+            eop = "write";
+            ename = source;
+            if (fprintf(src, "/* GENERATED FILE - DO NOT EDIT */\nconst char %s[] = {", symbol) < 0)
+                goto error;
+        }
 
         unsigned size = 0;
 
@@ -99,23 +105,29 @@ main(int argc, char **argv)
             ssize_t rd = fread(buf, 1, sizeof(buf), in);
             if (rd < 0)
                 goto error;
-            eop = "write";
-            ename = source;
-            for (unsigned i = 0; i < rd; ++i) {
-                const char *brk = ((size + i) % 8) ? "" : "\n   ";
-                if (fprintf(src, "%s 0x%02x,", brk, (unsigned char)buf[i]) < 0)
-                    goto error;
+            if (src) {
+                eop = "write";
+                ename = source;
+                for (unsigned i = 0; i < rd; ++i) {
+                    const char *brk = ((size + i) % 8) ? "" : "\n   ";
+                    if (fprintf(src, "%s 0x%02x,", brk, (unsigned char)buf[i]) < 0)
+                        goto error;
+                }
             }
             size += rd;
         }
 
-        eop = "write";
-        ename = source;
-        if (fprintf(src, "\n};\n") < 0)
-            goto error;
-        ename = header;
-        if (fprintf(hdr, "/* GENERATED FILE - DO NOT EDIT */\nextern const char %s[%u];\n", symbol, size) < 0)
-            goto error;
+        if (src) {
+            eop = "write";
+            ename = source;
+            if (fprintf(src, "\n};\n") < 0)
+                goto error;
+        }
+        if (hdr) {
+            ename = header;
+            if (fprintf(hdr, "/* GENERATED FILE - DO NOT EDIT */\nextern const char %s[%u];\n", symbol, size) < 0)
+                goto error;
+        }
 
         ret = 0;
         goto close;

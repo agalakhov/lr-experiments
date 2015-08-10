@@ -30,7 +30,7 @@ $(NOWARN): WFLAGS =
 
 DEPS = $(OBJS:.o=.d)
 ifneq ($(MAKECMDGOALS),clean)
-  include $(DEPS)
+  -include $(DEPS)
 endif
 
 all: main.exe
@@ -46,7 +46,7 @@ genblob.exe : genblob.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -O2 -o $@ $<
 
 %.d : %.c
-	$(CC) -M -MP -MQ $@ -MQ $(<:%.c=%.o) -o $@ $<
+	$(CC) -M -MP -MG -MQ $@ -MQ $(<:%.c=%.o) -o $@ $<
 
 %.o : %.c
 	$(CC) $(CFLAGS) $(WFLAGS) -c -o $@ $<
@@ -64,6 +64,9 @@ else
 	lemon -q $<
 endif
 
-blob_%.c blob_%.h : template_%.c genblob.exe
-	./genblob.exe -s blob_$* -i blob_$*.h -o blob_$*.c $<
+blob_%.c : template_%.c genblob.exe
+	./genblob.exe -s blob_$* -o blob_$*.c $<
+
+blob_%.h : template_%.c genblob.exe
+	./genblob.exe -s blob_$* -H blob_$*.h $<
 
