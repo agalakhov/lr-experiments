@@ -54,8 +54,15 @@ genblob.exe : genblob.c
 %.c : %.rl
 	ragel -o $@ $<
 
+ifeq ($(NOLEMON),yes)
+%.c %.h : %.ly
+	./main.exe $<
+	mv out.C $*.c
+	mv out.H $*.h
+else
 %.c %.h : %.ly %.lt
 	lemon -q $<
+endif
 
 blob_%.c blob_%.h : template_%.c genblob.exe
 	./genblob.exe -s blob_$* -i blob_$*.h -o blob_$*.c $<
