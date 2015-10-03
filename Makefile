@@ -3,7 +3,7 @@
 
 
 CC = clang
-CFLAGS += -g -O0 -std=c11 -pedantic -pedantic-errors -D_GNU_SOURCE
+CFLAGS += -g -O0 -std=c11 -pedantic -pedantic-errors -D_POSIX_C_SOURCE=200809L
 WFLAGS = -Wall -Wextra -Werror
 
 OBJS = main.o \
