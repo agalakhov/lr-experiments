@@ -31,22 +31,11 @@ grammar ::= rules.
 rules ::= .
 rules ::= rules rule.
 
-
-
-rule ::= PRAGMA_NAME LCURL text RCURL.
-
-rule ::= PRAGMA_TYPE WORD(N) LCURL text(T) RCURL.
+rule ::= PRAGMA_INCLUDE LCURL text(T) RCURL.
 {
-    grammar_assign_type(grammar, N, T);
-    rcunref((void*)N);
+    grammar_add_host_code(grammar, T);
     rcunref((void*)T);
 }
-
-rule ::= PRAGMA_DESTRUCTOR WORD LCURL text RCURL.
-
-rule ::= PRAGMA_FALLBACK WORD word_list DOT.
-word_list ::= .
-word_list ::= word_list WORD.
 
 rule ::= PRAGMA_START_SYMBOL WORD(S).
 {
@@ -60,18 +49,40 @@ rule ::= PRAGMA_TOKEN_TYPE LCURL text(T) RCURL.
     rcunref((void*)T);
 }
 
-rule ::= PRAGMA_INCLUDE LCURL text(T) RCURL.
+rule ::= PRAGMA_TYPE WORD(N) LCURL text(T) RCURL.
 {
-    grammar_add_host_code(grammar, T);
+    grammar_assign_type(grammar, N, T);
+    rcunref((void*)N);
     rcunref((void*)T);
 }
 
+rule ::= PRAGMA_TOKEN_DESTRUCTOR LCURL text(T) RCURL.
+{
+    grammar_assign_terminal_destructor(grammar, T);
+    rcunref((void*)T);
+}
+
+rule ::= PRAGMA_DESTRUCTOR WORD(N) LCURL text(T) RCURL.
+{
+    grammar_assign_destructor(grammar, N, T);
+    rcunref((void*)N);
+    rcunref((void*)T);
+}
+
+
+
+rule ::= PRAGMA_FALLBACK WORD word_list DOT.
+word_list ::= .
+word_list ::= word_list WORD.
+
 %fallback PRAGMA
-    PRAGMA_NAME PRAGMA_TOKEN_DESTRUCTOR
+    PRAGMA_NAME
     PRAGMA_EXTRA_ARGUMENT PRAGMA_SYNTAX_ERROR
 .
 rule ::= PRAGMA.
 rule ::= PRAGMA LCURL text RCURL.
+
+
 
 rule ::= left(L) IS right(R) DOT action(A).
 {

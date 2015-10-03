@@ -82,7 +82,39 @@ destroy_symbol(void *ptr)
     }
     if (sym->host_type)
         free((void *)sym->host_type);
+    if (sym->destructor_code)
+        free((void *)sym->destructor_code);
     free(sym);
+}
+
+/*
+ *  Destructor for grammar_t
+ */
+void
+grammar_free(grammar_t grammar)
+{
+    if (grammar->terminal_host_type)
+        free((void *)grammar->terminal_host_type);
+    if (grammar->terminal_destructor_code)
+        free((void *)grammar->terminal_destructor_code);
+    if (grammar->host_code)
+        free((void *)grammar->host_code);
+    strhash_free(grammar->hash, destroy_symbol);
+    free(grammar);
+}
+
+static struct symbol *
+find_create_symbol(grammar_t grammar, const char *name)
+{
+    struct symbol **s = (struct symbol **) strhash_find(grammar->hash, name);
+    if (! *s) {
+        *s = calloc(1, sizeof(struct symbol));
+        if (! *s)
+            abort();
+        (*s)->type = UNKNOWN;
+        (*s)->name = strhash_key((void **)s);
+    }
+    return *s;
 }
 
 static void
@@ -108,20 +140,6 @@ commit_symbol(grammar_t grammar, struct symbol *sym)
             grammar->symlist.last = sym;
             break;
     }
-}
-
-/*
- *  Destructor for grammar_t
- */
-void
-grammar_free(grammar_t grammar)
-{
-    if (grammar->terminal_host_type)
-        free((void *)grammar->terminal_host_type);
-    if (grammar->host_code)
-        free((void *)grammar->host_code);
-    strhash_free(grammar->hash, destroy_symbol);
-    free(grammar);
 }
 
 /*
@@ -161,19 +179,39 @@ grammar_assign_terminal_type(grammar_t grammar, const char *type)
 void
 grammar_assign_type(grammar_t grammar, const char *name, const char *type)
 {
-    struct symbol **s = (struct symbol **) strhash_find(grammar->hash, name);
-    if (! *s) {
-        *s = calloc(1, sizeof(struct symbol));
-        if (! *s)
-            abort();
-        (*s)->type = UNKNOWN;
-        (*s)->name = strhash_key((void **)s);
-    }
-    if ((*s)->host_type) {
+    struct symbol *s = find_create_symbol(grammar, name);
+    if (s->host_type) {
         print("error: reassiginig symbol type for %s\n", name);
         return;
     }
-    (*s)->host_type = strdup(type);
+    s->host_type = strdup(type);
+}
+
+/* 
+ * Assign host type to terminals.
+ */
+void
+grammar_assign_terminal_destructor(grammar_t grammar, const char *destructor_code)
+{
+    if (grammar->terminal_destructor_code) {
+        print("error: reassigning terminal destructor code\n");
+        return;
+    }
+    grammar->terminal_destructor_code = strdup(destructor_code);
+}
+
+/*
+ * Assign destructor code to a symbol.
+ */
+void
+grammar_assign_destructor(grammar_t grammar, const char *name, const char *destructor_code)
+{
+    struct symbol *s = find_create_symbol(grammar, name);
+    if (s->destructor_code) {
+        print("error: reassiginig symbol destructor for %s\n", name);
+        return;
+    }
+    s->destructor_code = strdup(destructor_code);
 }
 
 /*
@@ -185,20 +223,12 @@ grammar_nonterminal(grammar_t grammar,
                     unsigned rsn, const struct grammar_element rs[],
                     const char *host_code)
 {
-    struct symbol **s = (struct symbol **) strhash_find(grammar->hash, ls->name);
-    if (! *s) {
-        *s = calloc(1, sizeof(struct symbol));
-        if (! *s)
-            abort();
-        (*s)->type = NONTERMINAL;
-        (*s)->name = strhash_key((void **)s);
-        commit_symbol(grammar, *s);
+    struct symbol *s = find_create_symbol(grammar, ls->name);
+    if (s->type == UNKNOWN) {
+        s->type = NONTERMINAL;
+        commit_symbol(grammar, s);
     }
-    if ((*s)->type == UNKNOWN) {
-        (*s)->type = NONTERMINAL;
-        commit_symbol(grammar, *s);
-    }
-    if ((*s)->type != NONTERMINAL) {
+    if (s->type != NONTERMINAL) {
         print("error: symbol `%s' is not a nonterminal\n", ls->name);
         return;
     }
@@ -206,9 +236,9 @@ grammar_nonterminal(grammar_t grammar,
     struct rule *rule = calloc(1, sizeof_struct_rule(rsn));
     if (! rule)
         abort();
-    rule->next = (*s)->nt.rules;
-    rule->sym = (*s);
-    (*s)->nt.rules = rule;
+    rule->next = s->nt.rules;
+    rule->sym = s;
+    s->nt.rules = rule;
     rule->id = ++(grammar->n_rules);
     if (ls->label) {
         const char *lbl = strdup(ls->label);

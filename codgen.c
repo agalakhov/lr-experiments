@@ -72,13 +72,11 @@ foreach_rule(lr0_machine_t machine, emit_func_t func, FILE *fd)
                 arg->type = sym->name;
             }
             for (unsigned i = 0; i < rule->length; ++i) {
-                if (rule->rs[i].label) {
-                    struct argument *arg = &reduce->args[reduce->nargs++];
-                    arg->stack_index = (signed)i - (signed)rule->length;
-                    arg->host_type = (rule->rs[i].sym.sym->type == TERMINAL) ? termtype(grammar) : symtype(rule->rs[i].sym.sym);
-                    arg->name= rule->rs[i].label;
-                    arg->type = (rule->rs[i].sym.sym->type == TERMINAL) ? "__terminal" : rule->rs[i].sym.sym->name;
-                }
+                struct argument *arg = &reduce->args[reduce->nargs++];
+                arg->stack_index = (signed)i - (signed)rule->length;
+                arg->host_type = (rule->rs[i].sym.sym->type == TERMINAL) ? termtype(grammar) : symtype(rule->rs[i].sym.sym);
+                arg->name = rule->rs[i].label;
+                arg->type = (rule->rs[i].sym.sym->type == TERMINAL) ? "__terminal" : rule->rs[i].sym.sym->name;
             }
             func(fd, reduce);
         }
@@ -91,19 +89,60 @@ emit_functions_c(FILE *fd, const struct reduce *reduce)
     if (! reduce->host_code)
         return;
     for (unsigned i = 0; i < reduce->nargs; ++i) {
-        fprintf(fd, "#define %s (*__%s)\n", reduce->args[i].name, reduce->args[i].name);
+        if (reduce->args[i].name)
+            fprintf(fd, "#define %s (*__%s)\n", reduce->args[i].name, reduce->args[i].name);
     }
-    fprintf(fd, "static inline void __reduce_%s (", reduce->name);
+    fprintf(fd, "static inline void\n__reduce_%s (", reduce->name);
+    bool cont = false;
     for (unsigned i = 0; i < reduce->nargs; ++i) {
-        fprintf(fd, "\n  %s %s*__%s%s", reduce->args[i].host_type,
-                (i ? "const " : ""), reduce->args[i].name,
-                (i + 1 < reduce->nargs ? "," : ""));
+        if (reduce->args[i].name) {
+            fprintf(fd, "%s\n  %s %s*__%s", (cont ? "," : ""), reduce->args[i].host_type,
+                    (i ? "const " : ""), reduce->args[i].name);
+            cont = true;
+        }
     }
-    fprintf(fd, "%s) {%s}\n", (reduce->nargs ? "\n" : ""), reduce->host_code);
+    fprintf(fd, "%s) {%s}\n", (cont ? "\n" : ""), reduce->host_code);
     for (unsigned i = 0; i < reduce->nargs; ++i) {
-        fprintf(fd, "#undef %s\n", reduce->args[i].name);
+        if (reduce->args[i].name) {
+            fprintf(fd, "#undef %s\n", reduce->args[i].name);
+        }
     }
     fprintf(fd, "\n");
+}
+
+static void
+emit_destructor_c(FILE *fd, const char *name, const char *host_type, const char *host_code)
+{
+    fprintf(fd, "static inline void\n__destruct_%s(%s *__T)\n{", name, host_type);
+    if (host_code) {
+        const char *p = host_code;
+        for (;;) {
+            const char *q = strstr(p, "$$");
+            if (! q) {
+                fwrite(p, 1, strlen(p), fd);
+                break;
+            } else {
+                fwrite(p, 1, (q - p), fd);
+                fprintf(fd, "(*__T)");
+                p = q + 2;
+            }
+        }
+    } else {
+        fprintf(fd, "\n    (void) __T;\n");
+    }
+    fprintf(fd, "}\n\n");
+}
+
+static void
+emit_destructors_c(FILE *fd, lr0_machine_t machine)
+{
+    const struct grammar *grammar = machine->grammar;
+    emit_destructor_c(fd, "__terminal", termtype(grammar), grammar->terminal_destructor_code);
+    for (const struct symbol *sym = grammar->symlist.first; sym; sym = sym->next) {
+        if (sym->type != NONTERMINAL)
+            continue;
+        emit_destructor_c(fd, sym->name, symtype(sym), sym->destructor_code);
+    }
 }
 
 static void
@@ -115,10 +154,21 @@ emit_reduce_c(FILE *fd, const struct reduce *reduce)
     fprintf(fd, "        __assert_stack(parser, %u);\n", reduce->pop_size);
     if (reduce->host_code) {
         fprintf(fd, "        __reduce_%s(", reduce->name);
+        bool cont = false;
         for (unsigned i = 0; i < reduce->nargs; ++i) {
-            fprintf(fd, "%s&parser->stack.sp[%i].item.%s", (i ? ", " : ""), reduce->args[i].stack_index, reduce->args[i].type);
+            if (reduce->args[i].name) {
+                fprintf(fd, "%s&parser->stack.sp[%i].item.%s",
+                        (cont ? ", " : ""), reduce->args[i].stack_index, reduce->args[i].type);
+                cont = true;
+            }
         }
         fprintf(fd, ");\n");
+        for (unsigned i = 0; i < reduce->nargs; ++i) {
+            if (! reduce->args[i].name) {
+                fprintf(fd, "        __destruct_%s(&parser->stack.sp[%i].item.%s);\n",
+                        reduce->args[i].type, reduce->args[i].stack_index, reduce->args[i].type);
+            }
+        }
     }
     fprintf(fd, "        __pop(parser, %u, %u);\n", reduce->pop_size, reduce->symbol);
     fprintf(fd, "        break;\n");
@@ -217,6 +267,7 @@ codgen_c(FILE *fd, lr0_machine_t machine)
             emit_types_c(fd, machine);
         } else if (! strcmp(line, "%%functions\n")) {
             foreach_rule(machine, emit_functions_c, fd);
+            emit_destructors_c(fd, machine);
         } else if (! strcmp(line, "%%reduce\n")) {
             foreach_rule(machine, emit_reduce_c, fd);
         } else if (! strcmp(line, "%%actions\n")) {

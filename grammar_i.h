@@ -27,6 +27,7 @@ struct grammar {
     union rsptr     start;
 
     const char *    terminal_host_type;
+    const char *    terminal_destructor_code;
     const char *    host_code;
 };
 
@@ -55,6 +56,7 @@ struct symbol {
     bool                nullable;
 
     const char *        host_type;
+    const char *        destructor_code;
     unsigned            use_count;
 
     union {

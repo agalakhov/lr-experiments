@@ -14,6 +14,8 @@ void grammar_start_symbol(grammar_t grammar, const char *start);
 
 void grammar_assign_terminal_type(grammar_t grammar, const char *type);
 void grammar_assign_type(grammar_t grammar, const char *name, const char *type);
+void grammar_assign_terminal_destructor(grammar_t grammar, const char *destructor_code);
+void grammar_assign_destructor(grammar_t grammar, const char *name, const char *destructor_code);
 
 void grammar_nonterminal(grammar_t grammar,
                          const struct grammar_element *ls,
