@@ -26,6 +26,8 @@ struct grammar {
 
     union rsptr     start;
 
+    const char *    machine_name;
+
     const char *    terminal_host_type;
     const char *    terminal_destructor_code;
     const char *    host_code;

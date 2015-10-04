@@ -31,6 +31,12 @@ grammar ::= rules.
 rules ::= .
 rules ::= rules rule.
 
+rule ::= PRAGMA_NAME LCURL text(T) RCURL.
+{
+    grammar_name(grammar, T);
+    rcunref((void*)T);
+}
+
 rule ::= PRAGMA_INCLUDE LCURL text(T) RCURL.
 {
     grammar_add_host_code(grammar, T);
@@ -76,7 +82,6 @@ word_list ::= .
 word_list ::= word_list WORD.
 
 %fallback PRAGMA
-    PRAGMA_NAME
     PRAGMA_EXTRA_ARGUMENT PRAGMA_SYNTAX_ERROR
 .
 rule ::= PRAGMA.

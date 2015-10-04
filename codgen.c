@@ -189,7 +189,11 @@ emit_types_c(FILE *fd, lr0_machine_t machine)
 static void
 emit_defines_c(FILE *fd, lr0_machine_t machine)
 {
-    fprintf(fd, "#define __EXPORT(x) x\n");
+    const struct grammar *grammar = machine->grammar;
+    const char *machine_name = grammar->machine_name;
+    const char *prefix = machine_name ? machine_name : "";
+    const char *delim = machine_name ? "_##" : "";
+    fprintf(fd, "#define __EXPORT(x) %s%sx\n", prefix, delim);
     fprintf(fd, "typedef %s __EXPORT(terminal_t);\n", termtype(machine->grammar));
 }
 

@@ -10,6 +10,8 @@ struct grammar_element {
 grammar_t grammar_alloc(void);
 void grammar_free(grammar_t grammar);
 
+void grammar_name(grammar_t grammar, const char *name);
+
 void grammar_start_symbol(grammar_t grammar, const char *start);
 
 void grammar_assign_terminal_type(grammar_t grammar, const char *type);

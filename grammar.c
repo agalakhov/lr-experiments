@@ -93,6 +93,8 @@ destroy_symbol(void *ptr)
 void
 grammar_free(grammar_t grammar)
 {
+    if (grammar->machine_name)
+        free((void *)grammar->machine_name);
     if (grammar->terminal_host_type)
         free((void *)grammar->terminal_host_type);
     if (grammar->terminal_destructor_code)
@@ -140,6 +142,19 @@ commit_symbol(grammar_t grammar, struct symbol *sym)
             grammar->symlist.last = sym;
             break;
     }
+}
+
+/*
+ * Assign name to the grammar
+ */
+void
+grammar_name(grammar_t grammar, const char *name)
+{
+    if (grammar->machine_name) {
+        fprintf(stderr, "error: grammar already has a name\n");
+        return;
+    }
+    grammar->machine_name = strdup(name);
 }
 
 /*
