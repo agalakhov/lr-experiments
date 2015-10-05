@@ -49,9 +49,14 @@ main(int argc, char **argv)
         lalr_reduce_search(lr0m);
         lr0_print(lr0m);
         conflicts(lr0m);
+
         FILE *fd = fopen("out.C", "w");
         codgen_c(fd, lr0m);
         fclose(fd);
+        fd = fopen("out.H", "w");
+        codgen_c_h(fd, lr0m);
+        fclose(fd);
+
         lr0_free(lr0m);
     }
     grammar_free(tp.grammar);

@@ -313,3 +313,24 @@ codgen_c(FILE *fd, lr0_machine_t machine)
 
     fclose(tmpl);
 }
+
+void
+codgen_c_h(FILE *fd, lr0_machine_t machine)
+{
+    fprintf(fd, "/* GENERATED FILE - DO NOT EDIT */\n");
+    fprintf(fd, "#pragma once\n\n");
+
+    fprintf(fd, "enum {");
+    bool cont = false;
+    const struct grammar *grammar = machine->grammar;
+    for (const struct symbol * sym = grammar->symlist.first; sym; sym = sym->next) {
+        if (sym->type == TERMINAL) {
+            if (sym->name[0] != '%') {
+                fprintf(fd, "%s\n    %s = %u", (cont ? "," : ""), sym->name, sym->id);
+                cont = true;
+            }
+        }
+    }
+    fprintf(fd, "\n};\n");
+}
+
