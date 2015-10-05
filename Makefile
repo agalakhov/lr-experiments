@@ -2,8 +2,9 @@
 .DEFAULT_GOAL = all
 
 
-CC = clang
-CFLAGS += -g -O0 -std=c11 -pedantic -pedantic-errors -D_POSIX_C_SOURCE=200809L
+CC = gcc
+CFLAGS = -O2 -flto
+CFLAGS += -std=c11 -pedantic -pedantic-errors -D_POSIX_C_SOURCE=200809L
 WFLAGS = -Wall -Wextra -Werror
 
 OBJS = main.o \
