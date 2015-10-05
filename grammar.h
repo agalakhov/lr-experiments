@@ -13,6 +13,7 @@ void grammar_free(grammar_t grammar);
 void grammar_name(grammar_t grammar, const char *name);
 
 void grammar_start_symbol(grammar_t grammar, const char *start);
+void grammar_set_extra_argument(grammar_t grammar, const char *extra_argument);
 
 void grammar_assign_terminal_type(grammar_t grammar, const char *type);
 void grammar_assign_type(grammar_t grammar, const char *name, const char *type);

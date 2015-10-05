@@ -71,7 +71,7 @@ __shift(struct __EXPORT(parser) *parser, unsigned token, __EXPORT(terminal_t) te
 }
 
 static inline void
-__reduce(struct __EXPORT(parser) *parser, unsigned id)
+__reduce(__EXTRA_ARGUMENT struct __EXPORT(parser) *parser, unsigned id)
 {
     switch (id) {
 %%reduce
@@ -98,13 +98,13 @@ __EXPORT(parser_free)(struct __EXPORT(parser) *parser)
 }
 
 bool
-__EXPORT(parser_parse)(struct __EXPORT(parser) *parser, unsigned token, __EXPORT(terminal_t) terminal)
+__EXPORT(parser_parse)(__EXTRA_ARGUMENT struct __EXPORT(parser) *parser, unsigned token, __EXPORT(terminal_t) terminal)
 {
     while (true) {
         unsigned act = __action(parser->state, token);
         if (! act)
             break;
-        __reduce(parser, act);
+        __reduce(__EXTRA_ARGUMENT_VALUE parser, act);
     }
     __shift(parser, token, terminal);
     return (parser->state == 1);

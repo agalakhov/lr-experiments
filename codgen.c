@@ -21,6 +21,7 @@ struct reduce {
     unsigned        symbol;
     const char *    name;
     const char *    host_code;
+    const char *    extra_argument;
     unsigned        pop_size;
     unsigned        nargs;
     struct argument args[];
@@ -62,6 +63,7 @@ foreach_rule(lr0_machine_t machine, emit_func_t func, FILE *fd)
             reduce->symbol = sym->id;
             reduce->name = name;
             reduce->host_code = rule->host_code;
+            reduce->extra_argument = grammar->extra_argument;
             reduce->pop_size = rule->length;
             reduce->nargs = 0;
             if (rule->ls_label) {
@@ -94,6 +96,10 @@ emit_functions_c(FILE *fd, const struct reduce *reduce)
     }
     fprintf(fd, "static inline void\n__reduce_%s (", reduce->name);
     bool cont = false;
+    if (reduce->extra_argument) {
+        fprintf(fd, "%s", reduce->extra_argument);
+        cont = true;
+    }
     for (unsigned i = 0; i < reduce->nargs; ++i) {
         if (reduce->args[i].name) {
             fprintf(fd, "%s\n  %s %s*__%s", (cont ? "," : ""), reduce->args[i].host_type,
@@ -153,7 +159,7 @@ emit_reduce_c(FILE *fd, const struct reduce *reduce)
     fprintf(fd, "    case %u: /* %s */\n", reduce->id, reduce->name);
     fprintf(fd, "        __assert_stack(parser, %u);\n", reduce->pop_size);
     if (reduce->host_code) {
-        fprintf(fd, "        __reduce_%s(", reduce->name);
+        fprintf(fd, "        __reduce_%s(__EXTRA_ARGUMENT_VALUE", reduce->name);
         bool cont = false;
         for (unsigned i = 0; i < reduce->nargs; ++i) {
             if (reduce->args[i].name) {
@@ -194,6 +200,25 @@ emit_defines_c(FILE *fd, lr0_machine_t machine)
     const char *prefix = machine_name ? machine_name : "";
     const char *delim = machine_name ? "_##" : "";
     fprintf(fd, "#define __EXPORT(x) %s%sx\n", prefix, delim);
+    if (grammar->extra_argument) {
+        fprintf(fd, "#define __EXTRA_ARGUMENT %s,\n", grammar->extra_argument);
+        const char *value = grammar->extra_argument;
+        value += strlen(value);
+        bool seenchr = false;
+        for (; value != grammar->extra_argument; --value) {
+            if (!strchr(" \t", *value)) {
+                seenchr = true;
+            }
+            if (seenchr && strchr(" \t*&", *value)) {
+                ++value;
+                break;
+            }
+        }
+        fprintf(fd, "#define __EXTRA_ARGUMENT_VALUE %s,\n", value);
+    } else {
+        fprintf(fd, "#define __EXTRA_ARGUMENT\n");
+        fprintf(fd, "#define __EXTRA_ARGUMENT_VALUE\n");
+    }
     fprintf(fd, "typedef %s __EXPORT(terminal_t);\n", termtype(machine->grammar));
 }
 

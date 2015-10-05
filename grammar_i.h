@@ -31,6 +31,7 @@ struct grammar {
     const char *    terminal_host_type;
     const char *    terminal_destructor_code;
     const char *    host_code;
+    const char *    extra_argument;
 };
 
 enum symbol_type {

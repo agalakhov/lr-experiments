@@ -101,6 +101,8 @@ grammar_free(grammar_t grammar)
         free((void *)grammar->terminal_destructor_code);
     if (grammar->host_code)
         free((void *)grammar->host_code);
+    if (grammar->extra_argument)
+        free((void *)grammar->extra_argument);
     strhash_free(grammar->hash, destroy_symbol);
     free(grammar);
 }
@@ -173,6 +175,16 @@ grammar_add_host_code(grammar_t grammar, const char *host_code)
     if (grammar->host_code)
         free((void *)grammar->host_code);
     grammar->host_code = str;
+}
+
+void
+grammar_set_extra_argument(grammar_t grammar, const char *extra_argument)
+{
+    if (grammar->extra_argument) {
+        print("error: grammar already has extra_argument\n");
+        return;
+    }
+    grammar->extra_argument = strdup(extra_argument);
 }
 
 /* 

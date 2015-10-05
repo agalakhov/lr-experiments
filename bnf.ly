@@ -49,6 +49,12 @@ rule ::= PRAGMA_START_SYMBOL WORD(S).
     rcunref((void*)S);
 }
 
+rule ::= PRAGMA_EXTRA_ARGUMENT LCURL text(T) RCURL.
+{
+  grammar_set_extra_argument(grammar, T);
+  rcunref((void*)T);
+}
+
 rule ::= PRAGMA_TOKEN_TYPE LCURL text(T) RCURL.
 {
     grammar_assign_terminal_type(grammar, T);
@@ -82,7 +88,7 @@ word_list ::= .
 word_list ::= word_list WORD.
 
 %fallback PRAGMA
-    PRAGMA_EXTRA_ARGUMENT PRAGMA_SYNTAX_ERROR
+    PRAGMA_SYNTAX_ERROR
 .
 rule ::= PRAGMA.
 rule ::= PRAGMA LCURL text RCURL.
