@@ -1,6 +1,11 @@
 
 #include "yy.h"
+
+#include "codgen.h"
+#include "conflict.h"
 #include "grammar.h"
+#include "lalr.h"
+#include "lr0.h"
 #include "print.h"
 
 #include <stdio.h>
@@ -38,8 +43,17 @@ main(int argc, char **argv)
     tp.lemon = bnfparserAlloc(malloc);
     tp.grammar = grammar_alloc();
     int e = parse_file((struct parser *)&tp, argv[1]);
-    if (! e)
+    if (! e) {
         grammar_complete(tp.grammar);
+        lr0_machine_t lr0m = lr0_build(tp.grammar);
+        lalr_reduce_search(lr0m);
+        lr0_print(lr0m);
+        conflicts(lr0m);
+        FILE *fd = fopen("out.C", "w");
+        codgen_c(fd, lr0m);
+        fclose(fd);
+        lr0_free(lr0m);
+    }
     grammar_free(tp.grammar);
     bnfparserFree(tp.lemon, free);
     if (e < 0) {

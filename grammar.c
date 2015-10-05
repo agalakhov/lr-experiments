@@ -1,15 +1,10 @@
 #include "grammar.h"
 
-#include "conflict.h"
-#include "lr0.h"
 #include "grammar_i.h"
-#include "lalr.h"
 #include "nullable.h"
 #include "strhash.h"
 
 #include "print.h"
-
-#include "codgen.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -153,7 +148,7 @@ void
 grammar_name(grammar_t grammar, const char *name)
 {
     if (grammar->machine_name) {
-        fprintf(stderr, "error: grammar already has a name\n");
+        print("error: grammar already has a name\n");
         return;
     }
     grammar->machine_name = strdup(name);
@@ -485,14 +480,5 @@ grammar_complete(grammar_t grammar)
 
     if (print_opt(P_NULLABLE))
         nullable_dump(grammar);
-
-    lr0_machine_t lr0m = lr0_build(grammar);
-    lalr_reduce_search(lr0m);
-    lr0_print(lr0m);
-    conflicts(lr0m);
-    FILE *fd = fopen("out.C", "w");
-    codgen_c(fd, lr0m);
-    fclose(fd);
-    lr0_free(lr0m);
 }
 
