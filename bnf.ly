@@ -51,8 +51,8 @@ rule ::= PRAGMA_START_SYMBOL WORD(S).
 
 rule ::= PRAGMA_EXTRA_ARGUMENT LCURL text(T) RCURL.
 {
-  grammar_set_extra_argument(grammar, T);
-  rcunref((void*)T);
+    grammar_set_extra_argument(grammar, T);
+    rcunref((void*)T);
 }
 
 rule ::= PRAGMA_TOKEN_TYPE LCURL text(T) RCURL.
@@ -81,18 +81,42 @@ rule ::= PRAGMA_DESTRUCTOR WORD(N) LCURL text(T) RCURL.
     rcunref((void*)T);
 }
 
+rule ::= PRAGMA_FALLBACK WORD(L) word_list(R) DOT.
+{
+    size_t s = strarr_size(R);
+    const char** r = strarr_data(R);
+    for (size_t i = 0; i < s; ++i) {
+      struct grammar_element ll = { .name = L, .label = "LL" };
+      struct grammar_element rr = { .name = r[i], .label = "RR" };
+      grammar_deduce_type(grammar, L, r[i]);
+      grammar_nonterminal(grammar, &ll, 1, &rr, "LL = RR;");
+    }
+    rcunref((void*)L);
+    strarr_unref(R);
+}
 
+%type word_list { strarr_t }
+%destructor word_list { strarr_unref($$); }
 
-rule ::= PRAGMA_FALLBACK WORD word_list DOT.
-word_list ::= .
-word_list ::= word_list WORD.
+word_list(X) ::= WORD(W).
+{
+  strarr_t arr = strarr_create(32);
+  X = strarr_push(arr, W);
+  rcunref((void*)W);
+}
+
+word_list(X) ::= word_list(R) WORD(W).
+{
+  X = strarr_push(R, W);
+  rcunref((void*)W);
+}
+
 
 %fallback PRAGMA
     PRAGMA_SYNTAX_ERROR
 .
 rule ::= PRAGMA.
 rule ::= PRAGMA LCURL text RCURL.
-
 
 
 rule ::= left(L) IS right(R) DOT action(A).

@@ -236,6 +236,20 @@ grammar_assign_destructor(grammar_t grammar, const char *name, const char *destr
     s->destructor_code = strdup(destructor_code);
 }
 
+void
+grammar_deduce_type(grammar_t grammar, const char *ls_name, const char *rs_name)
+{
+    struct symbol *ls = find_create_symbol(grammar, ls_name);
+    struct symbol *rs = find_create_symbol(grammar, rs_name);
+    if (! ls->host_type) {
+        if (rs->host_type)
+            ls->host_type = strdup(rs->host_type);
+    } else {
+        if (! rs->host_type || strcmp(ls->host_type, rs->host_type))
+            print("error: overriding type for %s\n", ls_name);
+    }
+}
+
 /*
  * Add a new nonterminal rule to the grammar while building it.
  */
