@@ -13,13 +13,13 @@
 #include <stdlib.h>
 
 void *bnfparserAlloc(void *(*mallocProc)(size_t));
-void bnfparser(void *parser, int token, const char *val, grammar_t grammar);
+void bnfparser(void *parser, int token, const char *val, struct grammar *grammar);
 void bnfparserFree(void *parser, void (*freeProc)(void *));
 
 struct theparser {
     struct parser pars;
     void *lemon;
-    grammar_t grammar;
+    struct grammar *grammar;
 };
 
 static void

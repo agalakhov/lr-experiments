@@ -11,12 +11,12 @@
 #include <string.h>
 
 /*
- *  Constructor for grammar_t
+ *  Constructor for struct grammar *
  */
-grammar_t
+struct grammar *
 grammar_alloc(void)
 {
-    grammar_t ret = (grammar_t) calloc(1, sizeof(struct grammar));
+    struct grammar *ret = (struct grammar *) calloc(1, sizeof(struct grammar));
     if (! ret)
         return NULL;
     ret->hash = strhash_alloc();
@@ -83,10 +83,10 @@ destroy_symbol(void *ptr)
 }
 
 /*
- *  Destructor for grammar_t
+ *  Destructor for struct grammar *
  */
 void
-grammar_free(grammar_t grammar)
+grammar_free(struct grammar *grammar)
 {
     if (grammar->machine_name)
         free((void *)grammar->machine_name);
@@ -103,7 +103,7 @@ grammar_free(grammar_t grammar)
 }
 
 static struct symbol *
-find_create_symbol(grammar_t grammar, const char *name)
+find_create_symbol(struct grammar *grammar, const char *name)
 {
     struct symbol **s = (struct symbol **) strhash_find(grammar->hash, name);
     if (! *s) {
@@ -117,7 +117,7 @@ find_create_symbol(grammar_t grammar, const char *name)
 }
 
 static void
-commit_symbol(grammar_t grammar, struct symbol *sym)
+commit_symbol(struct grammar *grammar, struct symbol *sym)
 {
     if (! grammar->symlist.first) {
         sym->next = NULL;
@@ -145,7 +145,7 @@ commit_symbol(grammar_t grammar, struct symbol *sym)
  * Assign name to the grammar
  */
 void
-grammar_name(grammar_t grammar, const char *name)
+grammar_name(struct grammar *grammar, const char *name)
 {
     if (grammar->machine_name) {
         print("error: grammar already has a name\n");
@@ -158,7 +158,7 @@ grammar_name(grammar_t grammar, const char *name)
  * Add raw host code to the grammar
  */
 void
-grammar_add_host_code(grammar_t grammar, const char *host_code)
+grammar_add_host_code(struct grammar *grammar, const char *host_code)
 {
     size_t len = strlen(host_code);
     if (grammar->host_code)
@@ -173,7 +173,7 @@ grammar_add_host_code(grammar_t grammar, const char *host_code)
 }
 
 void
-grammar_set_extra_argument(grammar_t grammar, const char *extra_argument)
+grammar_set_extra_argument(struct grammar *grammar, const char *extra_argument)
 {
     if (grammar->extra_argument) {
         print("error: grammar already has extra_argument\n");
@@ -186,7 +186,7 @@ grammar_set_extra_argument(grammar_t grammar, const char *extra_argument)
  * Assign host type to terminals.
  */
 void 
-grammar_assign_terminal_type(grammar_t grammar, const char *type)
+grammar_assign_terminal_type(struct grammar *grammar, const char *type)
 {
     if (grammar->terminal_host_type) {
         print("error: reassigning terminal type\n");
@@ -199,7 +199,7 @@ grammar_assign_terminal_type(grammar_t grammar, const char *type)
  * Assign host type to a symbol.
  */
 void
-grammar_assign_type(grammar_t grammar, const char *name, const char *type)
+grammar_assign_type(struct grammar *grammar, const char *name, const char *type)
 {
     struct symbol *s = find_create_symbol(grammar, name);
     if (s->host_type) {
@@ -213,7 +213,7 @@ grammar_assign_type(grammar_t grammar, const char *name, const char *type)
  * Assign host type to terminals.
  */
 void
-grammar_assign_terminal_destructor(grammar_t grammar, const char *destructor_code)
+grammar_assign_terminal_destructor(struct grammar *grammar, const char *destructor_code)
 {
     if (grammar->terminal_destructor_code) {
         print("error: reassigning terminal destructor code\n");
@@ -226,7 +226,7 @@ grammar_assign_terminal_destructor(grammar_t grammar, const char *destructor_cod
  * Assign destructor code to a symbol.
  */
 void
-grammar_assign_destructor(grammar_t grammar, const char *name, const char *destructor_code)
+grammar_assign_destructor(struct grammar *grammar, const char *name, const char *destructor_code)
 {
     struct symbol *s = find_create_symbol(grammar, name);
     if (s->destructor_code) {
@@ -237,7 +237,7 @@ grammar_assign_destructor(grammar_t grammar, const char *name, const char *destr
 }
 
 void
-grammar_deduce_type(grammar_t grammar, const char *ls_name, const char *rs_name)
+grammar_deduce_type(struct grammar *grammar, const char *ls_name, const char *rs_name)
 {
     struct symbol *ls = find_create_symbol(grammar, ls_name);
     struct symbol *rs = find_create_symbol(grammar, rs_name);
@@ -254,7 +254,7 @@ grammar_deduce_type(grammar_t grammar, const char *ls_name, const char *rs_name)
  * Add a new nonterminal rule to the grammar while building it.
  */
 void
-grammar_nonterminal(grammar_t grammar,
+grammar_nonterminal(struct grammar *grammar,
                     const struct grammar_element *ls,
                     unsigned rsn, const struct grammar_element rs[],
                     const char *host_code)
@@ -306,14 +306,14 @@ grammar_nonterminal(grammar_t grammar,
  * Set grammar start symbol
  */
 void
-grammar_start_symbol(grammar_t grammar, const char *start)
+grammar_start_symbol(struct grammar *grammar, const char *start)
 {
     grammar->start.tmp.raw = strhash_key(strhash_find(grammar->hash, start));
 }
 
 
 static void
-resolve_symbols(grammar_t grammar)
+resolve_symbols(struct grammar *grammar)
 {
     for (struct symbol * sym = grammar->symlist.first; sym; sym = sym->next) {
         for (const struct rule * rule = sym->nt.rules; rule; rule = rule->next) {
@@ -343,7 +343,7 @@ resolve_symbols(grammar_t grammar)
 }
 
 static void
-add_sentinel_rule(grammar_t grammar)
+add_sentinel_rule(struct grammar *grammar)
 {
     struct symbol ** eof = (struct symbol **) strhash_find(grammar->hash, "%eof");
     assert(! *eof);
@@ -396,7 +396,7 @@ strtype(const struct symbol * sym)
 }
 
 static void
-count_symbols(grammar_t grammar)
+count_symbols(struct grammar *grammar)
 {
     unsigned id = 0;
     for (struct symbol * sym = grammar->symlist.first; sym; sym = sym->next, ++id) {
@@ -418,7 +418,7 @@ count_symbols(grammar_t grammar)
 }
 
 static void
-determine_start(grammar_t grammar)
+determine_start(struct grammar * grammar)
 {
     for (struct symbol * sym = grammar->symlist.first; sym; sym = sym->next) {
         if (! sym->use_count) {
@@ -433,7 +433,7 @@ determine_start(grammar_t grammar)
 }
 
 static void
-dump_grammar(grammar_t grammar)
+dump_grammar(const struct grammar *grammar)
 {
     print("-- Grammar:\n");
     for (struct symbol * sym = grammar->symlist.first; sym; sym = sym->next) {
@@ -461,7 +461,7 @@ dump_grammar(grammar_t grammar)
 }
 
 static void
-dump_symbols(grammar_t grammar)
+dump_symbols(const struct grammar *grammar)
 {
     print("-- Terminals (%u):\n", grammar->n_terminals);
     for (struct symbol * sym = grammar->symlist.first; sym; sym = sym->next) {
@@ -477,7 +477,7 @@ dump_symbols(grammar_t grammar)
  * Finish building grammar
  */
 void
-grammar_complete(grammar_t grammar)
+grammar_complete(struct grammar *grammar)
 {
     resolve_symbols(grammar);
     determine_start(grammar);

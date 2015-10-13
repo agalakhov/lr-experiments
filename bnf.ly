@@ -21,7 +21,7 @@ grammar_element_free(void *ptr)
 
 %name {bnfparser}
 
-%extra_argument { grammar_t grammar }
+%extra_argument { struct grammar *grammar }
 %token_type { const char * }
 %token_destructor { rcunref((void*)$$); }
 

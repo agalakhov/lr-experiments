@@ -10,7 +10,7 @@
 #include <string.h>
 
 void
-nullable_dump(grammar_t grammar)
+nullable_dump(const struct grammar *grammar)
 {
     print("-- Nullable:\n");
     for (const struct symbol * sym = grammar->symlist.first; sym; sym = sym->next) {
@@ -44,7 +44,7 @@ enqueue_rule_if_needed(const struct grammar * grammar, struct symbol * * queue, 
 }
 
 void
-nullable_find(grammar_t grammar)
+nullable_find(const struct grammar *grammar)
 {
     struct symbol * queue = NULL;
     struct rule * relations[grammar->n_nonterminals];

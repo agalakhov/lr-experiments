@@ -207,7 +207,7 @@ lr0_goto_find(const struct lr0_gototab * gototab, const struct symbol * sym)
 }
 
 lr0_machine_t
-lr0_build(grammar_t grammar)
+lr0_build(const struct grammar *grammar)
 {
     struct lr0_machine_builder * builder = calloc(1, sizeof(struct lr0_machine_builder));
     if (! builder)
