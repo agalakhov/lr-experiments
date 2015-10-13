@@ -1,10 +1,19 @@
 #pragma once
 
+#include "grammar.h"
+
 #include "strhash.h"
 #include "bitset.h"
 
 #include <stddef.h>
 #include <stdbool.h>
+
+enum symbol_typex {
+    UNKNOWN = SYMBOL_UNKNOWN,
+    TERMINAL = SYMBOL_TERMINAL,
+    NONTERMINAL = SYMBOL_NONTERMINAL,
+    START_NONTERMINAL
+};
 
 union rsptr {
     struct {
@@ -34,13 +43,6 @@ struct grammar {
     const char *    extra_argument;
 };
 
-enum symbol_type {
-    UNKNOWN = 0,
-    TERMINAL,
-    NONTERMINAL,
-    START_NONTERMINAL,
-};
-
 struct terminal {
     int             dummy; /* FIXME */
 };
@@ -50,7 +52,7 @@ struct nonterminal {
 };
 
 struct symbol {
-    enum symbol_type    type;       /* terminal or nonterminal */
+    enum symbol_typex   type;       /* terminal or nonterminal */
     const char *        name;       /* left side of production */
     unsigned            id;
 

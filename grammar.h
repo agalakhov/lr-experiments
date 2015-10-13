@@ -1,6 +1,15 @@
 #pragma once
 
 struct grammar;
+struct symbol;
+
+enum symbol_type {
+    SYMBOL_UNKNOWN = 0,
+    SYMBOL_TERMINAL,
+    SYMBOL_NONTERMINAL
+};
+
+
 
 struct grammar_element {
     const char * name;
@@ -16,6 +25,8 @@ void grammar_complete(struct grammar *grammar);
 void grammar_name(struct grammar *grammar, const char *name);
 void grammar_add_host_code(struct grammar *grammar, const char *host_code);
 void grammar_set_extra_argument(struct grammar *grammar, const char *extra_argument);
+
+struct symbol * grammar_symbol(struct grammar *grammar, const char *name, enum symbol_type type);
 
 
 
