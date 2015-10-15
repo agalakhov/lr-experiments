@@ -102,20 +102,6 @@ grammar_free(struct grammar *grammar)
     free(grammar);
 }
 
-static struct symbol *
-find_create_symbol(struct grammar *grammar, const char *name)
-{
-    struct symbol **s = (struct symbol **) strhash_find(grammar->hash, name);
-    if (! *s) {
-        *s = calloc(1, sizeof(struct symbol));
-        if (! *s)
-            abort();
-        (*s)->type = UNKNOWN;
-        (*s)->name = strhash_key((void **)s);
-    }
-    return *s;
-}
-
 static void
 commit_symbol(struct grammar *grammar, struct symbol *sym)
 {
@@ -139,6 +125,30 @@ commit_symbol(struct grammar *grammar, struct symbol *sym)
             grammar->symlist.last = sym;
             break;
     }
+}
+
+struct symbol *
+grammar_symbol(struct grammar *grammar, const char *name, enum symbol_type type)
+{
+    struct symbol **s = (struct symbol **) strhash_find(grammar->hash, name);
+    if (! *s) {
+        *s = calloc(1, sizeof(struct symbol));
+        if (! *s)
+            abort();
+        (*s)->type = (enum symbol_typex)type;
+        (*s)->name = strhash_key((void **)s);
+        if (type != SYMBOL_UNKNOWN)
+            commit_symbol(grammar, *s);
+    } else if ((*s)->type == UNKNOWN) {
+        if (type != SYMBOL_UNKNOWN) {
+            (*s)->type = type;
+            commit_symbol(grammar, *s);
+        }
+    } else if ((type != SYMBOL_UNKNOWN) && ((*s)->type != (enum symbol_typex)type)) {
+        print("error: reassigning type for symbol %s\n", name);
+        return NULL;
+    }
+    return *s;
 }
 
 /*
@@ -201,7 +211,9 @@ grammar_assign_terminal_type(struct grammar *grammar, const char *type)
 void
 grammar_assign_type(struct grammar *grammar, const char *name, const char *type)
 {
-    struct symbol *s = find_create_symbol(grammar, name);
+    struct symbol *s = grammar_symbol(grammar, name, SYMBOL_NONTERMINAL);
+    if (! s)
+        return;
     if (s->host_type) {
         print("error: reassiginig symbol type for %s\n", name);
         return;
@@ -228,7 +240,9 @@ grammar_assign_terminal_destructor(struct grammar *grammar, const char *destruct
 void
 grammar_assign_destructor(struct grammar *grammar, const char *name, const char *destructor_code)
 {
-    struct symbol *s = find_create_symbol(grammar, name);
+    struct symbol *s = grammar_symbol(grammar, name, SYMBOL_NONTERMINAL);
+    if (! s)
+        return;
     if (s->destructor_code) {
         print("error: reassiginig symbol destructor for %s\n", name);
         return;
@@ -239,8 +253,8 @@ grammar_assign_destructor(struct grammar *grammar, const char *name, const char 
 void
 grammar_deduce_type(struct grammar *grammar, const char *ls_name, const char *rs_name)
 {
-    struct symbol *ls = find_create_symbol(grammar, ls_name);
-    struct symbol *rs = find_create_symbol(grammar, rs_name);
+    struct symbol *ls = grammar_symbol(grammar, ls_name, SYMBOL_UNKNOWN);
+    struct symbol *rs = grammar_symbol(grammar, rs_name, SYMBOL_UNKNOWN);
     if (! ls->host_type) {
         if (rs->host_type)
             ls->host_type = strdup(rs->host_type);
@@ -259,12 +273,8 @@ grammar_nonterminal(struct grammar *grammar,
                     unsigned rsn, const struct grammar_element rs[],
                     const char *host_code)
 {
-    struct symbol *s = find_create_symbol(grammar, ls->name);
-    if (s->type == UNKNOWN) {
-        s->type = NONTERMINAL;
-        commit_symbol(grammar, s);
-    }
-    if (s->type != NONTERMINAL) {
+    struct symbol *s = grammar_symbol(grammar, ls->name, SYMBOL_NONTERMINAL);
+    if (! s) {
         print("error: symbol `%s' is not a nonterminal\n", ls->name);
         return;
     }
@@ -291,7 +301,7 @@ grammar_nonterminal(struct grammar *grammar,
 
     rule->length = rsn;
     for (unsigned i = 0; i < rsn; ++i) {
-        rule->rs[i].sym.tmp.raw = strhash_key(strhash_find(grammar->hash, rs[i].name));
+        rule->rs[i].sym = grammar_symbol(grammar, rs[i].name, SYMBOL_UNKNOWN);
         if (rs[i].label) {
                 const char *lbl = strdup(rs[i].label);
             if (! lbl)
@@ -308,7 +318,7 @@ grammar_nonterminal(struct grammar *grammar,
 void
 grammar_start_symbol(struct grammar *grammar, const char *start)
 {
-    grammar->start.tmp.raw = strhash_key(strhash_find(grammar->hash, start));
+    grammar->start = grammar_symbol(grammar, start, SYMBOL_NONTERMINAL);
 }
 
 
@@ -318,27 +328,14 @@ resolve_symbols(struct grammar *grammar)
     for (struct symbol * sym = grammar->symlist.first; sym; sym = sym->next) {
         for (const struct rule * rule = sym->nt.rules; rule; rule = rule->next) {
             for (unsigned i = 0; i < rule->length; ++i) {
-                struct symbol ** s = (struct symbol **) strhash_find(grammar->hash, rule->rs[i].sym.tmp.raw);
-                if (! *s) {
-                    *s = calloc(1, sizeof(struct symbol));
-                    if (! *s)
-                        abort();
-                    (*s)->name = strhash_key((void **)s);
+                struct symbol * s = rule->rs[i].sym;
+                if (s->type == UNKNOWN) {
+                    s->type = TERMINAL;
+                    commit_symbol(grammar, s);
                 }
-                if ((*s)->type == UNKNOWN) {
-                    (*s)->type = TERMINAL;
-                    commit_symbol(grammar, *s);
-                }
-                ++((*s)->use_count);
-                ((struct rule *) rule)->rs[i].sym.sym = *s;
+                ++(s->use_count);
             }
         }
-    }
-    if (grammar->start.tmp.raw) {
-        struct symbol ** sym = (struct symbol **) strhash_find(grammar->hash, grammar->start.tmp.raw);
-        if (! *sym)
-            print("error: grammar has no symbol `%s\n'", grammar->start.tmp.raw);
-        grammar->start.sym = *sym;
     }
 }
 
@@ -372,12 +369,12 @@ add_sentinel_rule(struct grammar *grammar)
     rule->sym = *start;
     rule->id = 0;
     rule->length = 2;
-    rule->rs[0].sym.sym = grammar->start.sym;
-    rule->rs[1].sym.sym = *eof;
+    rule->rs[0].sym = (struct symbol *) grammar->start;
+    rule->rs[1].sym = *eof;
     for (unsigned i = 0; i < rule->length; ++i)
-        ++(((struct symbol*)rule->rs[i].sym.sym)->use_count);
+        ++(((struct symbol*)rule->rs[i].sym)->use_count);
 
-    grammar->start.sym = *start;
+    grammar->start = *start;
 }
 
 static const char *
@@ -422,10 +419,10 @@ determine_start(struct grammar * grammar)
 {
     for (struct symbol * sym = grammar->symlist.first; sym; sym = sym->next) {
         if (! sym->use_count) {
-            if (! grammar->start.sym && sym->type == NONTERMINAL) {
+            if (! grammar->start && sym->type == NONTERMINAL) {
                 print("note: using `%s' as start symbol\n", sym->name);
-                grammar->start.sym = sym;
-            } else if (sym != grammar->start.sym && sym->type != UNKNOWN) {
+                grammar->start = sym;
+            } else if (sym != grammar->start && sym->type != UNKNOWN) {
                 print("warning: unused %s symbol `%s'\n", strtype(sym), sym->name);
             }
         }
@@ -448,7 +445,7 @@ dump_grammar(const struct grammar *grammar)
                 for (const struct rule * r = sym->nt.rules; r; r = r->next) {
                     print("// %i\n%s ::=", r->id, sym->name);
                     for (unsigned i = 0; i < r->length; ++i)
-                        print(" %s", r->rs[i].sym.sym->name);
+                        print(" %s", r->rs[i].sym->name);
                     print(".");
                     if (r->host_code)
                         print(" {%s}", r->host_code);

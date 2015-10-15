@@ -188,12 +188,12 @@ find_lookback_includes(lr0_machine_t lr0_machine, struct trans trans[], unsigned
             const struct lr0_state * st = tr->state1;
             print("  rule: %s ::= (%u)", sym->name, st->id);
             for (unsigned i = 0; i < rule->length; ++i) {
-                print(" %s", rule->rs[i].sym.sym->name);
+                print(" %s", rule->rs[i].sym->name);
                 oldst = st;
-                st = lr0_goto_find(st->gototab, rule->rs[i].sym.sym);
+                st = lr0_goto_find(st->gototab, rule->rs[i].sym);
                 assert(st != NULL);
                 print(" (%u)", st->id);
-                if ((i + 1 >= rule->nnl) && (rule->rs[i].sym.sym->type == NONTERMINAL)) {
+                if ((i + 1 >= rule->nnl) && (rule->rs[i].sym->type == NONTERMINAL)) {
                     struct trans * ltr = lookup_transition(trans, ntrans, oldst, st);
                     add_includes(ltr, tr);
                 }

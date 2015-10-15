@@ -15,13 +15,6 @@ enum symbol_typex {
     START_NONTERMINAL
 };
 
-union rsptr {
-    struct {
-        const char *        raw;
-    }                   tmp;
-    const struct symbol *   sym;
-};
-
 struct grammar {
     strhash_t       hash;  /* of symbols */
     struct {
@@ -33,7 +26,7 @@ struct grammar {
     unsigned        n_nonterminals;
     unsigned        n_rules;
 
-    union rsptr     start;
+    const struct symbol * start;
 
     const char *    machine_name;
 
@@ -75,7 +68,7 @@ struct symbol {
 };
 
 struct right_side {
-    union rsptr             sym;
+    struct symbol *         sym;
     const char *            label;
 };
 

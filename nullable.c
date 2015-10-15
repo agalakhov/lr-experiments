@@ -20,7 +20,7 @@ nullable_dump(const struct grammar *grammar)
         for (const struct rule * rule = sym->nt.rules; rule; rule = rule->next) {
             print("    ");
             for (unsigned i = 0; i < rule->length; ++i)
-                print("%s ", rule->rs[i].sym.sym->name);
+                print("%s ", rule->rs[i].sym->name);
             print(". (%u)\n", rule->nnl);
         }
     }
@@ -36,8 +36,8 @@ enqueue_rule_if_needed(const struct grammar * grammar, struct symbol * * queue, 
         sym->nullable = true;
         sym->tmp.que_next = *queue;
         *queue = sym;
-    } else if (rule->rs[rule->nnl - 1].sym.sym->type == NONTERMINAL) {
-        unsigned i = rule->rs[rule->nnl - 1].sym.sym->id - grammar->n_terminals;
+    } else if (rule->rs[rule->nnl - 1].sym->type == NONTERMINAL) {
+        unsigned i = rule->rs[rule->nnl - 1].sym->id - grammar->n_terminals;
         rule->tmp.que_next = relations[i];
         relations[i] = rule;
     }
@@ -69,7 +69,7 @@ nullable_find(const struct grammar *grammar)
             assert(rule->nnl);
             do {
                 --(rule->nnl);
-            } while ((rule->nnl != 0) && rule->rs[rule->nnl - 1].sym.sym->nullable);
+            } while ((rule->nnl != 0) && rule->rs[rule->nnl - 1].sym->nullable);
             enqueue_rule_if_needed(grammar, &queue, relations, rule);
         }
     }
