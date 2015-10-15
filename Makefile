@@ -3,7 +3,11 @@
 
 
 CC = gcc
-CFLAGS = -O2 -flto
+ifdef ($(DEBUG)
+  CFLAGS = -O2 -flto
+else
+  CFLAGS = -O0 -g
+endif
 CFLAGS += -std=c11 -pedantic -pedantic-errors -D_POSIX_C_SOURCE=200809L
 WFLAGS = -Wall -Wextra -Werror
 
